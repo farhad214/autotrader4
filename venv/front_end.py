@@ -58,6 +58,9 @@ p_inv = 0
 # Boolean for Logging content
 blc = True
 
+def test1():
+    print()
+
 def mf_front_end():
     # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     global root
