@@ -60,6 +60,8 @@ blc = True
 
 def test1():
     print()
+def test2():
+    print()
 
 def mf_front_end():
     # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
