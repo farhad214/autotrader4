@@ -478,13 +478,12 @@ def mf_front_end():
             q = f"update m7.autotrader_status set autotrader_status = '{autotrader_status}' where uid = 0;"
             _ = gcp.query_postgresql(q, select_query=False)
 
-            df_av, df_srmc = conrad.mf_conrad_server()
-
             while True:
                 if autotrader_status == False:
                     stop_event.set()
 
                 if not stop_event.isSet():
+                    df_av, df_srmc = conrad.mf_conrad_server()
                     dft, ts_trade_checked = etrm.mf_igloo_etrm()
                     dfo = po.mf_get_orders(df_av, df_srmc, dft, ts_trade_checked, data_for_frontend_demo=False)
                     autotrader_status = mf_trade(dfo)
