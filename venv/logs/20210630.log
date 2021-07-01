@@ -1,0 +1,151 @@
+2021/06/30 11:52:49-2073-front_end.py-front_end-mf_front_end-753-73-we're testing
+2021/06/30 12:03:22-2055-front_end.py-front_end-mf_front_end-909-74-Auto-trader is launched.
+2021/06/30 12:03:23-2809-front_end.py-front_end-update_fields-663-290-Update button is pressed
+2021/06/30 12:03:26-5741-front_end.py-front_end-update_fields-594-292-Availability and SRMC are imported.
+2021/06/30 12:03:28-8072-front_end.py-front_end-update_fields-925-295-Trades are imported
+2021/06/30 12:03:47-2008-front_end.py-front_end-mf_front_end-112-74-Auto-trader is launched.
+2021/06/30 12:03:47-2891-front_end.py-front_end-update_fields-995-290-Update button is pressed
+2021/06/30 12:03:51-6476-front_end.py-front_end-update_fields-580-292-Availability and SRMC are imported.
+2021/06/30 12:03:53-8703-front_end.py-front_end-update_fields-808-295-Trades are imported
+2021/06/30 12:03:55-10030-front_end.py-front_end-update_fields-135-298-Order dataframe is created.
+2021/06/30 12:03:55-10587-front_end.py-front_end-update_fields-691-301-Assets are grouped.
+2021/06/30 12:03:56-10998-front_end.py-front_end-update_fields-102-307-Groups are pivoted.
+2021/06/30 12:03:56-11064-front_end.py-front_end-update_fields-169-335-Post-processing of groups are accomplished.
+2021/06/30 12:03:59-14320-front_end.py-front_end-update_fields-424-342-Asset groups are written on PosgreSQL.
+2021/06/30 12:03:59-14716-front_end.py-front_end-update_fields-821-383-Market treeview is filled.
+2021/06/30 12:03:59-14727-front_end.py-front_end-update_fields-832-408-Asset bid treeview is filled.
+2021/06/30 12:03:59-14805-front_end.py-front_end-update_fields-909-432-Asset ask treeview is filled.
+2021/06/30 12:04:00-15207-front_end.py-front_end-update_fields-311-448-Most recent ID gas & relevant processes are acomplished.
+2021/06/30 12:04:01-16557-front_end.py-front_end-update_fields-662-290-Update button is pressed
+2021/06/30 12:04:04-19652-front_end.py-front_end-update_fields-756-292-Availability and SRMC are imported.
+2021/06/30 12:04:07-22035-front_end.py-front_end-update_fields-140-295-Trades are imported
+2021/06/30 12:04:07-22883-front_end.py-front_end-update_fields-987-298-Order dataframe is created.
+2021/06/30 12:04:08-23175-front_end.py-front_end-update_fields-280-301-Assets are grouped.
+2021/06/30 12:04:08-23580-front_end.py-front_end-update_fields-684-307-Groups are pivoted.
+2021/06/30 12:04:08-23647-front_end.py-front_end-update_fields-752-335-Post-processing of groups are accomplished.
+2021/06/30 12:04:12-27077-front_end.py-front_end-update_fields-181-342-Asset groups are written on PosgreSQL.
+2021/06/30 12:04:12-27500-front_end.py-front_end-update_fields-605-383-Market treeview is filled.
+2021/06/30 12:04:12-27507-front_end.py-front_end-update_fields-612-408-Asset bid treeview is filled.
+2021/06/30 12:04:12-27570-front_end.py-front_end-update_fields-674-432-Asset ask treeview is filled.
+2021/06/30 12:04:13-27976-front_end.py-front_end-update_fields-81-448-Most recent ID gas & relevant processes are acomplished.
+2021/06/30 12:07:45-1969-front_end.py-front_end-mf_front_end-332-74-Autotrader is launched.
+2021/06/30 12:07:46-2952-front_end.py-front_end-update_fields-315-290-Update button is pressed
+2021/06/30 12:07:49-6095-front_end.py-front_end-update_fields-458-292-Availability and SRMC are imported.
+2021/06/30 12:07:51-8270-front_end.py-front_end-update_fields-633-295-Trades are imported
+2021/06/30 12:07:52-9540-front_end.py-front_end-update_fields-904-298-Order dataframe is created.
+2021/06/30 12:07:53-9894-front_end.py-front_end-update_fields-258-301-Assets are grouped.
+2021/06/30 12:07:53-10300-front_end.py-front_end-update_fields-663-307-Groups are pivoted.
+2021/06/30 12:07:53-10365-front_end.py-front_end-update_fields-728-335-Postprocessing of groups are accomplished.
+2021/06/30 12:07:57-13764-front_end.py-front_end-update_fields-128-342-Asset groups are written on PosgreSQL.
+2021/06/30 12:07:57-14247-front_end.py-front_end-update_fields-611-383-Market treeview is filled.
+2021/06/30 12:07:57-14262-front_end.py-front_end-update_fields-626-408-Asset bid treeview is filled.
+2021/06/30 12:07:57-14391-front_end.py-front_end-update_fields-754-432-Asset ask treeview is filled.
+2021/06/30 12:07:58-14699-front_end.py-front_end-update_fields-63-448-Most recent ID gas & relevant processes are acomplished.
+2021/06/30 12:08:00-16796-front_end.py-front_end-update_fields-159-290-Update button is pressed
+2021/06/30 12:08:03-19939-front_end.py-front_end-update_fields-302-292-Availability and SRMC are imported.
+2021/06/30 12:08:05-22365-front_end.py-front_end-update_fields-729-295-Trades are imported
+2021/06/30 12:08:06-23255-front_end.py-front_end-update_fields-618-298-Order dataframe is created.
+2021/06/30 12:08:06-23547-front_end.py-front_end-update_fields-910-301-Assets are grouped.
+2021/06/30 12:08:07-23953-front_end.py-front_end-update_fields-316-307-Groups are pivoted.
+2021/06/30 12:08:07-24021-front_end.py-front_end-update_fields-384-335-Postprocessing of groups are accomplished.
+2021/06/30 12:08:13-30145-front_end.py-front_end-update_fields-508-342-Asset groups are written on PosgreSQL.
+2021/06/30 12:08:14-30710-front_end.py-front_end-update_fields-73-383-Market treeview is filled.
+2021/06/30 12:08:14-30717-front_end.py-front_end-update_fields-80-408-Asset bid treeview is filled.
+2021/06/30 12:08:14-30782-front_end.py-front_end-update_fields-145-432-Asset ask treeview is filled.
+2021/06/30 12:08:14-31221-front_end.py-front_end-update_fields-585-448-Most recent ID gas & relevant processes are acomplished.
+2021/06/30 12:16:40-2140-front_end.py-front_end-mf_front_end-283-74-Autotrader is launched.
+2021/06/30 12:16:41-2942-front_end.py-front_end-update_fields-85-290-Update button is pressed
+2021/06/30 12:16:43-5661-front_end.py-front_end-update_fields-805-292-Availability and SRMC are imported.
+2021/06/30 12:16:56-18475-front_end.py-front_end-update_fields-618-295-Trades are imported
+2021/06/30 12:16:57-19495-prepare_orders.py-prepare_orders-mf_get_orders-639-484-Testing
+2021/06/30 12:16:57-19496-front_end.py-front_end-update_fields-640-298-Order dataframe is created.
+2021/06/30 12:16:58-20034-front_end.py-front_end-update_fields-177-301-Assets are grouped.
+2021/06/30 12:16:58-20453-front_end.py-front_end-update_fields-596-307-Groups are pivoted.
+2021/06/30 12:16:58-20518-front_end.py-front_end-update_fields-661-335-Postprocessing of groups are accomplished.
+2021/06/30 12:17:01-23389-front_end.py-front_end-update_fields-532-342-Asset groups are written on PosgreSQL.
+2021/06/30 12:17:02-23983-front_end.py-front_end-update_fields-126-383-Market treeview is filled.
+2021/06/30 12:17:02-23988-front_end.py-front_end-update_fields-131-408-Asset bid treeview is filled.
+2021/06/30 12:17:02-24072-front_end.py-front_end-update_fields-215-432-Asset ask treeview is filled.
+2021/06/30 12:17:02-24508-front_end.py-front_end-update_fields-652-448-Most recent ID gas & relevant processes are acomplished.
+2021/06/30 16:28:03-3631-front_end.py-front_end-mf_front_end-550-74-Autotrader is launched.
+2021/06/30 16:28:04-4588-front_end.py-front_end-update_fields-507-290-Update button is pressed
+2021/06/30 16:28:05-6017-conrad_server.py-conrad_server-mf_conrad_server-936-243-Availability dataframed is filled.
+2021/06/30 16:28:08-8242-conrad_server.py-conrad_server-mf_conrad_server-161-247-SRMC dataframe is filled.
+2021/06/30 16:28:09-9498-conrad_server.py-conrad_server-process_srmc-416-152-SRMC dataframe is processed
+2021/06/30 16:28:09-9498-front_end.py-front_end-update_fields-416-292-Availability and SRMC are imported.
+2021/06/30 16:28:11-11659-front_end.py-front_end-update_fields-577-295-Trades are imported
+2021/06/30 16:28:11-11660-prepare_orders.py-prepare_orders-mf_get_orders-578-471-mf_get_orders is initiated.
+2021/06/30 16:28:11-11870-prepare_orders.py-prepare_orders-init_dfo-789-124-dfo is initiated.
+2021/06/30 16:28:11-12055-prepare_orders.py-prepare_orders-format_dfo-974-198-dfo is formatted.
+2021/06/30 16:28:11-12060-prepare_orders.py-prepare_orders-flag_can_bb-979-227-buy-back condition is checked.
+2021/06/30 16:28:12-12374-prepare_orders.py-prepare_orders-flag_for_gc-292-299-gate closure conditions are checked.
+2021/06/30 16:28:12-12395-prepare_orders.py-prepare_orders-flag_for_site_selection-313-262-selected sites condition is checked.
+2021/06/30 16:28:12-12398-prepare_orders.py-prepare_orders-flag_for_shift_sp-316-248-shift time condition is checked.
+2021/06/30 16:28:12-12414-prepare_orders.py-prepare_orders-flag_can_trade-332-354-Can trade condition is checked.
+2021/06/30 16:28:12-12472-prepare_orders.py-prepare_orders-flag_isin_horizon-391-379-Horizon condition is checked.
+2021/06/30 16:28:13-13114-prepare_orders.py-prepare_orders-calc_mw_to_trade-32-339-MW to trade condition is checked
+2021/06/30 16:28:13-13124-prepare_orders.py-prepare_orders-finalise_dfo-42-458-dfo is finalised
+2021/06/30 16:28:13-13125-front_end.py-front_end-update_fields-43-298-Order dataframe is created.
+2021/06/30 16:28:13-13540-front_end.py-front_end-update_fields-458-301-Assets are grouped.
+2021/06/30 16:28:13-14001-front_end.py-front_end-update_fields-920-307-Groups are pivoted.
+2021/06/30 16:28:13-14074-front_end.py-front_end-update_fields-993-335-Postprocessing of groups are accomplished.
+2021/06/30 16:28:18-18588-front_end.py-front_end-update_fields-507-342-Asset groups are written on PosgreSQL.
+2021/06/30 16:28:19-19114-trade.py-trade-calc_p_asset-32-442-Asset prices are calculated.
+2021/06/30 16:28:19-19207-front_end.py-front_end-update_fields-126-383-Market treeview is filled.
+2021/06/30 16:28:19-19229-front_end.py-front_end-update_fields-148-408-Asset bid treeview is filled.
+2021/06/30 16:28:19-19309-front_end.py-front_end-update_fields-227-432-Asset ask treeview is filled.
+2021/06/30 16:28:19-19839-front_end.py-front_end-update_fields-758-448-Most recent ID gas & relevant processes are acomplished.
+2021/06/30 16:28:26-26180-front_end.py-front_end-update_fields-99-290-Update button is pressed
+2021/06/30 16:28:26-26981-conrad_server.py-conrad_server-mf_conrad_server-899-243-Availability dataframed is filled.
+2021/06/30 16:28:27-28053-conrad_server.py-conrad_server-mf_conrad_server-971-247-SRMC dataframe is filled.
+2021/06/30 16:28:29-29299-conrad_server.py-conrad_server-process_srmc-217-152-SRMC dataframe is processed
+2021/06/30 16:28:29-29299-front_end.py-front_end-update_fields-217-292-Availability and SRMC are imported.
+2021/06/30 16:28:31-31569-front_end.py-front_end-update_fields-487-295-Trades are imported
+2021/06/30 16:28:31-31570-prepare_orders.py-prepare_orders-mf_get_orders-488-471-mf_get_orders is initiated.
+2021/06/30 16:28:31-31698-prepare_orders.py-prepare_orders-init_dfo-617-124-dfo is initiated.
+2021/06/30 16:28:31-31813-prepare_orders.py-prepare_orders-format_dfo-732-198-dfo is formatted.
+2021/06/30 16:28:31-31817-prepare_orders.py-prepare_orders-flag_can_bb-736-227-buy-back condition is checked.
+2021/06/30 16:28:31-32010-prepare_orders.py-prepare_orders-flag_for_gc-928-299-gate closure conditions are checked.
+2021/06/30 16:28:31-32030-prepare_orders.py-prepare_orders-flag_for_site_selection-948-262-selected sites condition is checked.
+2021/06/30 16:28:31-32033-prepare_orders.py-prepare_orders-flag_for_shift_sp-951-248-shift time condition is checked.
+2021/06/30 16:28:31-32043-prepare_orders.py-prepare_orders-flag_can_trade-962-354-Can trade condition is checked.
+2021/06/30 16:28:31-32075-prepare_orders.py-prepare_orders-flag_isin_horizon-994-379-Horizon condition is checked.
+2021/06/30 16:28:32-32690-prepare_orders.py-prepare_orders-calc_mw_to_trade-608-339-MW to trade condition is checked
+2021/06/30 16:28:32-32703-prepare_orders.py-prepare_orders-finalise_dfo-621-458-dfo is finalised
+2021/06/30 16:28:32-32703-front_end.py-front_end-update_fields-621-298-Order dataframe is created.
+2021/06/30 16:28:32-33067-front_end.py-front_end-update_fields-985-301-Assets are grouped.
+2021/06/30 16:28:33-33542-front_end.py-front_end-update_fields-461-307-Groups are pivoted.
+2021/06/30 16:28:33-33624-front_end.py-front_end-update_fields-543-335-Postprocessing of groups are accomplished.
+2021/06/30 16:28:38-38394-front_end.py-front_end-update_fields-312-342-Asset groups are written on PosgreSQL.
+2021/06/30 16:28:39-39188-trade.py-trade-calc_p_asset-106-442-Asset prices are calculated.
+2021/06/30 16:28:39-39258-front_end.py-front_end-update_fields-177-383-Market treeview is filled.
+2021/06/30 16:28:39-39281-front_end.py-front_end-update_fields-200-408-Asset bid treeview is filled.
+2021/06/30 16:28:39-39361-front_end.py-front_end-update_fields-280-432-Asset ask treeview is filled.
+2021/06/30 16:28:39-40061-front_end.py-front_end-update_fields-979-448-Most recent ID gas & relevant processes are acomplished.
+2021/07/01 09:50:54-62574887-front_end.py-front_end-update_fields-805-290-Update button is pressed
+2021/07/01 09:50:55-62575691-conrad_server.py-conrad_server-mf_conrad_server-609-243-Availability dataframed is filled.
+2021/07/01 09:50:56-62576946-conrad_server.py-conrad_server-mf_conrad_server-864-247-SRMC dataframe is filled.
+2021/07/01 09:50:57-62577306-conrad_server.py-conrad_server-process_srmc-224-152-SRMC dataframe is processed
+2021/07/01 09:50:57-62577306-front_end.py-front_end-update_fields-224-292-Availability and SRMC are imported.
+2021/07/01 09:50:59-62579389-front_end.py-front_end-update_fields-307-295-Trades are imported
+2021/07/01 09:50:59-62579389-prepare_orders.py-prepare_orders-mf_get_orders-307-471-mf_get_orders is initiated.
+2021/07/01 09:50:59-62579478-prepare_orders.py-prepare_orders-init_dfo-397-124-dfo is initiated.
+2021/07/01 09:50:59-62579548-prepare_orders.py-prepare_orders-format_dfo-467-198-dfo is formatted.
+2021/07/01 09:50:59-62579551-prepare_orders.py-prepare_orders-flag_can_bb-470-227-buy-back condition is checked.
+2021/07/01 09:50:59-62579818-prepare_orders.py-prepare_orders-flag_for_gc-737-299-gate closure conditions are checked.
+2021/07/01 09:50:59-62579838-prepare_orders.py-prepare_orders-flag_for_site_selection-757-262-selected sites condition is checked.
+2021/07/01 09:50:59-62579842-prepare_orders.py-prepare_orders-flag_for_shift_sp-761-248-shift time condition is checked.
+2021/07/01 09:50:59-62579852-prepare_orders.py-prepare_orders-flag_can_trade-771-354-Can trade condition is checked.
+2021/07/01 09:50:59-62579882-prepare_orders.py-prepare_orders-flag_isin_horizon-800-379-Horizon condition is checked.
+2021/07/01 09:51:00-62580352-prepare_orders.py-prepare_orders-calc_mw_to_trade-270-339-MW to trade condition is checked
+2021/07/01 09:51:00-62580361-prepare_orders.py-prepare_orders-finalise_dfo-279-458-dfo is finalised
+2021/07/01 09:51:00-62580362-front_end.py-front_end-update_fields-280-298-Order dataframe is created.
+2021/07/01 09:51:00-62580660-front_end.py-front_end-update_fields-578-301-Assets are grouped.
+2021/07/01 09:51:00-62580914-front_end.py-front_end-update_fields-833-307-Groups are pivoted.
+2021/07/01 09:51:00-62580979-front_end.py-front_end-update_fields-897-335-Postprocessing of groups are accomplished.
+2021/07/01 09:51:03-62583830-front_end.py-front_end-update_fields-749-342-Asset groups are written on PosgreSQL.
+2021/07/01 09:51:04-62584175-trade.py-trade-calc_p_asset-93-442-Asset prices are calculated.
+2021/07/01 09:51:04-62584240-front_end.py-front_end-update_fields-158-383-Market treeview is filled.
+2021/07/01 09:51:04-62584245-front_end.py-front_end-update_fields-163-408-Asset bid treeview is filled.
+2021/07/01 09:51:04-62584313-front_end.py-front_end-update_fields-232-432-Asset ask treeview is filled.
+2021/07/01 09:51:04-62584627-front_end.py-front_end-update_fields-545-448-Most recent ID gas & relevant processes are acomplished.

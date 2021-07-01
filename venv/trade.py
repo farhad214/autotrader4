@@ -14,6 +14,7 @@ import __main__ as main
 import sys
 import inspect
 import log1 as log1
+import logging
 
 # Boolean for Logging content
 blc = True
@@ -147,6 +148,7 @@ def get_igloo_depth(token, products):
         response = requests.get(url, headers=headers)
         j = json.loads(response.text)
         dfr = pd.concat([dfr, pd.DataFrame(j["Bids"]),pd.DataFrame(j["Offers"])])
+    logging.info("Market depth (igloo) is pulled.")
     return dfr
 
 def get_orders_or_trades(token, ret_type="orders"):
@@ -437,6 +439,7 @@ def calc_p_asset(dfi, asset_strategy, return_just_margin=False):
         print("Asset strategy governs the profitability that we're happy to sell at. At the time being, we're "
               "just using a simple minimum margin on top of p_srmc + 0.01 for selling & p_srmc - 0.01 for"
               "buying-back. Later we will develop more strategies which will further enable churning.")
+    logging.info("Asset prices are calculated.")
     return dfr
 
 def simplify_dfo(dfi, dfp, token):
@@ -543,6 +546,7 @@ def post_new_order(token, product, site, is_selling, volume, price, is_active=Tr
     url = base_url + "/order/new"
 
     response = requests.post(url, headers=headers, data=data)
+    logging.info("Order is (igloo) posted.")
     return json.loads(response.text)
 
 def amend_order(token, order_id, volume, price, request_id='abc123', allornothing=False, text = "text1"):
@@ -559,6 +563,7 @@ def amend_order(token, order_id, volume, price, request_id='abc123', allornothin
     headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + token}
     url = base_url + "/order/amend"
     response = requests.post(url, headers=headers, data=data)
+    logging.info("Order is (igloo) amended.")
     return json.loads(response.text)
 
 def cancel_order(id, token, request_id='abc123'):
@@ -571,6 +576,7 @@ def cancel_order(id, token, request_id='abc123'):
     headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + token}
     url = base_url + "/order/cancel"
     response = requests.post(url, headers=headers, data=data)
+    logging.info("Order is cancelled.")
     return json.loads(response.text)
 
 def get_earliest_tradable_product(site_type):
@@ -615,6 +621,7 @@ def submit_failed_attempt(dfi_row, j, order_status):
 
         # Execute the query
         _ = gcp.query_postgresql(q, select_query=False)
+    logging.info("Failed attempt is submitted.")
 
 def insert_order_on_db(x, j, post_order_type=None):
 
@@ -701,7 +708,7 @@ def insert_order_on_db(x, j, post_order_type=None):
 
             else:
                 print("Code shouldn't end up here.")
-
+    logging.info("Order is submitted on PostgreSQL.")
 def get_post_order_type(mw_ordered=None, p_ordered=None, p_to_trade=None):
 
     """
@@ -802,7 +809,7 @@ def get_active_order_details(dfi, dfm, orders):
     else:
         print("Igloo is supposed to provide us with a solution that we won't "
               "need to store live orders on an internal database")
-
+    logging.info("Get active order details from PostgreSQL.")
     return dfr.loc[:,cl_ordered], df_sql
 
 def check_stop_autotrader_status(token=None):
@@ -840,8 +847,10 @@ def check_stop_autotrader_status(token=None):
         else:
             print("Auto-trader failed to remove all active orders from the market.")
     else:
+        logging.info("Check autotrader status.")
         return autotrader_status
 
+    logging.info("Check autotrader status.")
     return autotrader_status
 
 def get_trades(token, order_id =None, trade_date=None, trade_time = None, product=None, id=None, market = "EPEX", account=None,
@@ -872,6 +881,7 @@ def get_trades(token, order_id =None, trade_date=None, trade_time = None, produc
 
 
     response = requests.get(url, headers=headers, data = data)
+    logging.info("Get trades(igloo).")
     return json.loads(response.text)
 
 def check_inactive_orders(token, df_sql, dfm, trades):
@@ -916,6 +926,7 @@ def check_inactive_orders(token, df_sql, dfm, trades):
                     _ = gcp.query_postgresql(q, select_query=False)
             else:
                 print("Fill this section when you start trading 2h, 4h products")
+    logging.info("Check inactive orders")
 
 def get_orders(token, status="all", product=None):
 
@@ -934,6 +945,7 @@ def get_orders(token, status="all", product=None):
         url = url + "&active=" + str(is_active)
 
     response = requests.get(url, headers=headers)
+    logging.info("Orders (igloo) are pulled.")
     return json.loads(response.text)
 
 def calc_otr(trades, orders, dfo):
@@ -980,6 +992,7 @@ def calc_otr(trades, orders, dfo):
     dfr["high_r_ot"] = np.where(dfr["r_ot"] > r_otr_thresh, True, False)
     # dfr["r_ot"] = 0
     # dfr["high_r_ot"] = False
+    logging.info("OTR is calculated.")
     return dfr
 
 def get_strategies(dfo):
@@ -1004,6 +1017,7 @@ def get_strategies(dfo):
         print("2h & 4h products need further work.")
     # print(d)
     # dfo["asset_strategy"] = dfo.loc[:,["sites","sp"]].apply(lambda x: d["asset"][x["sites"]][])
+
     return d
 
 def remove_multiple_orders_by_product_by_side(o,token):
@@ -1082,63 +1096,8 @@ def check_order_competitiveness(x, token):
                     o_is_competitive = False
                 else:
                     cancel_order(i[1]["order_id"], token)
-
+    logging.info("Check order competitiveness.")
     return o_is_competitive
-
-
-    # r = dfo.copy()
-    # r.rename(columns={"sites":"site_name"},inplace=True)
-    # # active, auto-trader orders on the market
-    # m1 = m.loc[:, ["order_id", "igloo_product", "site_name", "is_selling", "p_order"]]
-    # r1 = r.loc[:,["igloo_product","site_name","is_selling","p_to_trade"]]
-
-    # if faao.empty:
-    #     r["is_most_competitive"] = True
-    #     return r
-    # else:
-    #     for o in dfo.iterrows():
-    #         o_site = o[1]["sites"]
-    #         o_product = o[1]["igloo_product"]
-    #         o_is_selling = o[1]["is_selling"]
-    #         o_p_to_trade = o[1]["p_to_trade"]
-    #         # m = faao.loc[(faao.igloo_product == o_product) &
-    #         #              (faao.is_selling==o_is_selling) &
-    #         #              (faao.site_name!=o_site),:]
-    #         m = faao.loc[(faao.igloo_product == o_product) &
-    #                      (faao.is_selling==o_is_selling)]
-    #         m.loc[:, ["order_id", "igloo_product", "site_name", "is_selling", "p_order"]]
-    #
-    #         if m.empty:
-    #             pass
-    #         else:
-    #             m_p_order = m.loc[:,"p_order"].values[0]
-    #
-    #             if o_is_selling:
-    #                 if m_p_order <= o_p_to_trade:
-    #                     print("No cancelling is required. Flag the dfo entry to be uncompetitive.")
-    #                 else:
-    #                     print("What we have on the market is less competitive than what we're going to offer."
-    #                           "Cancel the the order on the market.")
-    #             else:
-    #                 if m_p_order >= o_p_to_trade:
-    #                     print("No cancelling is required. Flag the dfo entry to be uncompetitive.")
-    #                 else:
-    #                     print("What we have on the market is less competitive than what we're going to offer."
-    #                           "Cancel the the order on the market.")
-
-    # new_cols = []
-    # for col in faao.columns:
-    #     s = "mkt_"+col
-    #     new_cols.append(s)
-    # faao.columns = new_cols
-    #
-    # m = pd.merge(
-    #     r,faao,
-    #     left_on=["sites","is_selling","igloo_product"],
-    #     right_on=["mkt_site_name","mkt_is_selling","mkt_igloo_product"],
-    #     how="left"
-    # )
-    return r
 
 def check_if_traded_after_last_ts_check(token, x):
 
@@ -1159,11 +1118,14 @@ def check_if_traded_after_last_ts_check(token, x):
 
         # last time a trade went thorough for this combination return true else false
         if ts_last_traded >= ts_last_dfo_updated:
-            return True
+            r = True
         else:
-            return False
+            r = False
     else:
-        return False
+        r = False
+
+    logging.info("Check if order has traded since we checked dft.")
+    return r
 
 def cancel_hanging_orders(token):
     """
@@ -1219,11 +1181,13 @@ def cancel_hanging_orders(token):
                 cancel_order(order[1]["order_id"], token)
     else:
         print("It won't work with 2h or 4h products.")
-
+    logging.info("Cancel")
 def mf_trade(dfo):
 
-    if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
+
     if dfo.empty==False:
+
+        logging.info("mf_trade has started.")
 
         d = get_strategies(dfo)
 
@@ -1258,7 +1222,7 @@ def mf_trade(dfo):
             order_is_competitive = check_order_competitiveness(x, token)
             if (has_traded_after_last_check==False) & (order_is_competitive==True):
 
-                # j, post_order_type = submit_a_post_order(x[1])
+                j, post_order_type = submit_a_post_order(x[1])
                 insert_order_on_db(x[1], j, post_order_type)
             else:
                 if has_traded_after_last_check == True:

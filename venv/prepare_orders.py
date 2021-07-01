@@ -10,6 +10,7 @@ import __main__ as main
 import sys
 import inspect
 import log1 as log1
+import logging
 
 # Boolean for Logging content
 blc = True
@@ -19,7 +20,7 @@ blc = True
 #######################################################################################################################
 
 trade_selected_sites_only = True    # Trade only sites in tradable_sites list.
-tradable_sites = ["HAWEN", "THEVE"]
+tradable_sites = ["LANGE", "THEVE"]
 
 # tradable_sites = [
 #     'ALBON','ALCOA','AMPLL','ARNTT','BARLL','BENET','BISAM','CAEON','CHAEY','DOWII','DOWRM','FENON','FLINT','GOONE',
@@ -91,7 +92,7 @@ def init_dfo(df_av, df_srmc, site_names):
         Over the following functions, we're going to filter the content of this dataframe to those
         orders that we can|want to offer/bid on the market.
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
+    # log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     cn_index = ["date", "sites", "st", "is_selling", "timestamp", "sp", "igloo_product"]
 
     # Get today's normalised date
@@ -120,6 +121,7 @@ def init_dfo(df_av, df_srmc, site_names):
               "want to to apply strategy to 2H & 4H products as well.")
 
     # Rearrange columns & return.
+    logging.info("dfo is initiated.")
     return dfr[cn_index]
 
 def format_dfo(dfi, df_trades, df_av, df_srmc):
@@ -193,6 +195,7 @@ def format_dfo(dfi, df_trades, df_av, df_srmc):
     dfr["mw_traded"]=dfr["mw_traded"]*2
     dfr["mw_traded"].fillna(0,inplace=True)
 
+    logging.info("dfo is formatted.")
     return dfr
 
 def flag_can_bb(dfi, now):
@@ -221,6 +224,7 @@ def flag_can_bb(dfi, now):
     else:
         dfr["f_can_bb"] = True
 
+    logging.info("buyback condition is checked.")
     return dfr["f_can_bb"]
 
 def flag_for_shift_sp(dfi, now):
@@ -241,7 +245,7 @@ def flag_for_shift_sp(dfi, now):
                                                              (x<sp_desk[dt]["end"]) else False)
     else:
         dfr["f_shift_sp"] = True
-
+    logging.info("shift time condition is checked.")
     return dfr["f_shift_sp"]
 
 def flag_for_site_selection(dfi):
@@ -255,7 +259,7 @@ def flag_for_site_selection(dfi):
         dfr["f_sel_site"] = dfr["sites"].apply(lambda x: True if x in tradable_sites else False)
     else:
         dfr["f_sel_site"] = True
-
+    logging.info("selected sites condition is checked.")
     return dfr["f_sel_site"]
 
 def flag_for_gc(dfi,now):
@@ -292,7 +296,7 @@ def flag_for_gc(dfi,now):
     else:
         print("At the time being, we're trade only HH products. Later on we'll need to work on a methodology"
               "that is inclusive of all products")
-
+    logging.info("gate closure conditions are checked.")
     return dfr.loc[:, ["f_mkt_open", "f_bm_open","f_open"]]
 
 def calc_mw_to_trade(dfi):
@@ -332,7 +336,7 @@ def calc_mw_to_trade(dfi):
 
     # Finalse the tradable volume.
     dfr["mw_to_trade"] = dfr.loc[:,cn].apply(get_vol, axis=1)
-
+    logging.info("MW to trade condition is checked")
     return dfr["mw_to_trade"]
 
 def flag_can_trade(dfi):
@@ -347,7 +351,7 @@ def flag_can_trade(dfi):
 
     # f_can_trade is the result of two interim columns calculated above
     dfr["f_can_trade"] = np.where(dfr["is_selling"]==False,dfr["f_can_buy"],dfr["f_can_sell"])
-
+    logging.info("Can trade condition is checked.")
     return dfr["f_can_trade"]
 
 def flag_isin_horizon(dfi):
@@ -372,7 +376,7 @@ def flag_isin_horizon(dfi):
     else:
         print("For the time-being, we're only trading hh products."
               "Once we develop sth for 2h and 4h, insert the code here")
-
+    logging.info("Horizon condition is checked.")
     return dfr["f_isin_horizon"]
 
 def finalise_dfo(dfi, data_for_frontend_demo):
@@ -451,7 +455,7 @@ def finalise_dfo(dfi, data_for_frontend_demo):
                 dfa.drop_duplicates(subset=["sp"], keep="first", inplace=True)
 
             dfr = pd.concat([dfb,dfa],ignore_index=True).reset_index()
-
+    logging.info("dfo is finalised")
     return dfr
 
 def mf_get_orders(df_av, df_srmc, dft, ts_trade_checked, data_for_frontend_demo):
@@ -464,6 +468,7 @@ def mf_get_orders(df_av, df_srmc, dft, ts_trade_checked, data_for_frontend_demo)
     :return: dfo: dataframes of eligable orders
     """
     # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
+    logging.info("mf_get_orders is initiated.")
 
     site_names = get_unique_site_names(df_av, df_srmc)
     dfo = init_dfo(df_av, df_srmc, site_names)

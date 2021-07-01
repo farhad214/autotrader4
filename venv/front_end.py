@@ -6,7 +6,7 @@ from tkinter import ttk
 from PIL import ImageTk, Image # # pip install Pillow
 import threading
 
-
+import logging
 import __main__ as main
 import sys
 import inspect
@@ -58,23 +58,31 @@ p_inv = 0
 # Boolean for Logging content
 blc = True
 
-def test1():
-    print()
-def test2():
-    print()
-
 def mf_front_end():
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
+    import logging
+
+    # Logs folder + today's date
+    path = os.getcwd()+r"\\logs\\"+pd.to_datetime("today").normalize().strftime("%Y%m%d")+".log"
+
+    logging.basicConfig(
+        format='%(asctime)s-%(relativeCreated)d-%(filename)s-%(module)s-%(funcName)s-%(msecs)d-%(lineno)d-%(message)s',
+        level=logging.INFO,
+        datefmt='%Y/%m/%d %H:%M:%S',
+        filename=path
+    )
+
+    logging.info("Autotrader is launched.")
+
     global root
     update_without_clicking = True
     def change_ddl_bg(ddl_val):
-        # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
+
         bgc = d_colours["bg"]["bid"] if ddl_val == "Bid" else d_colours["bg"]["ask"]
         ddl_gr.config(bg=bgc)
         e_p_power.config(bg=bgc)
 
     def submit_p_power():
-        if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
+
         idx_grp_id = 0
         idx_p_model = 3
 
@@ -92,14 +100,13 @@ def mf_front_end():
         lbl_statusbar.config(text="New power price is submitted.", fg="blue")
 
     def change_ddl_gr_bg(event):
-        # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
+
         lbl_statusbar.config(text=event)
 
     def update_fields():
 
-        # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
         def group_assets(dfo):
-            if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
+
             dfr = dfo.copy()
 
             # There was an issue with SRMC table on commercial server -> hence we exclude SRMC == NA values.
@@ -189,7 +196,7 @@ def mf_front_end():
             return dfr
 
         def pvt_grps(dfo, at_grp, pvt_a):
-            # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
+
             # column names
 
             # Common column names
@@ -270,7 +277,7 @@ def mf_front_end():
             return df
 
         def get_grp_lbl(x):
-            # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
+
             if x["gr_type"] == "asset":
                 return x["sites"]
 
@@ -280,15 +287,25 @@ def mf_front_end():
             elif x["gr_type"] == "sp":
                 return ("HH" + x["s_sp"] + "-" + "All")
 
+        logging.info("Update button is pressed")
         df_av, df_srmc = conrad.mf_conrad_server(True)
+        logging.info("Availability and SRMC are imported.")
 
         dft, ts_trade_checked = etrm.mf_igloo_etrm()
+        logging.info("Trades are imported")
+
         dfo = po.mf_get_orders(df_av, df_srmc, dft, ts_trade_checked, data_for_frontend_demo=True)
+        logging.info("Order dataframe is created.")
+
         dfo = group_assets(dfo)
+        logging.info("Assets are grouped.")
+
         dfa_gr = pvt_grps(dfo, at_grp=True, pvt_a=True)
         dfa_sp = pvt_grps(dfo, at_grp=False, pvt_a=True)
         dfb_gr = pvt_grps(dfo, at_grp=True, pvt_a=False)
         dfb_sp = pvt_grps(dfo, at_grp=False, pvt_a=False)
+        logging.info("Groups are pivoted.")
+
         df = pd.concat([dfb_gr, dfa_gr, dfb_sp, dfa_sp], ignore_index=True)
         dfo["gr_type"] = "asset"
         df["sites"] = "NA"
@@ -304,7 +321,7 @@ def mf_front_end():
         df.sort_values(by=["sp", "int_grp", "lvl"], inplace=True)
 
         def get_parent_grp(x):
-            # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
+
             if x["gr_type"]=="asset":
                 return "HH" + str(x["sp"]) + "-" + str(x["grp"])
 
@@ -315,16 +332,16 @@ def mf_front_end():
 
         df["parent"] = df.loc[:,["sp","gr_type","grp"]].apply(get_parent_grp,axis=1)
 
+        logging.info("Postprocessing of groups are accomplished.")
         q = 'delete from m7.asset_groups;'
         gcp.query_postgresql(q, select_query=False)
         gcp.write_to_postgresql(df.loc[:,["prod_gr","parent", "sp", "gr_type", "grp", "sites",
                                           "mw_traded","mw_to_trade","p_traded","p_srmc",
                                           "lvl", "is_selling"]],
                                 "asset_groups", "m7")
+        logging.info("Asset groups are written on PosgreSQL.")
 
         def get_p_model_p_trader(df):
-
-            # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
 
             dfr = df.copy()
 
@@ -363,6 +380,7 @@ def mf_front_end():
             t2 = tuple(lst_cols)
             s_tag = row["prod_gr"][5]
             tv_mkt.insert(parent='', index="end", iid=index, text=row["prod_gr"], values=t2, tags = (s_tag))
+        logging.info("Market treeview is filled.")
 
         for record in tv_asset_b.get_children():
             tv_asset_b.delete(record)
@@ -387,6 +405,7 @@ def mf_front_end():
 
         tv_asset_b.tag_configure("asset", background=d_colours["bg"]["main_frm"])
 
+        logging.info("Asset bid treeview is filled.")
 
         for record in tv_asset_a.get_children():
             tv_asset_a.delete(record)
@@ -410,6 +429,8 @@ def mf_front_end():
             tv_asset_a.insert(parent=str_parent, index="end", iid=index, text=row["prod_gr"], values=t2, tags=("asset"))
 
         tv_asset_a.tag_configure("asset", background=d_colours["bg"]["main_frm"])
+        logging.info("Asset ask treeview is filled.")
+
         q = 'select * from m7.id_gas where inserted_time = (select max(inserted_time) from m7.id_gas);'
         df_gas = gcp.query_postgresql(q)
         ts =df_gas.loc[0,"inserted_time"].strftime("%Y-%m-%d %H:%M")
@@ -424,15 +445,14 @@ def mf_front_end():
 
         ts_str = pd.to_datetime("today").strftime("%H:%M:%S")
         lbl_statusbar.config(text=f"Fields are updated @ {ts_str}", fg="blue")
+        logging.info("Most recent ID gas & relevant processes are acomplished.")
 
     def start_autotrader():
 
-        # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
         btn_start.config(state=DISABLED)
 
         def clear_active_orders():
 
-            # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
             token = json.loads((requests.post(base_url + '/oauth/token', data=cred_m7)).text)["Token"]
 
             k = get_orders(token)
@@ -452,8 +472,6 @@ def mf_front_end():
                 cancel_order(id[1], token)
 
         def mf_main():
-
-            # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
 
 
             autotrader_status = True
@@ -546,16 +564,16 @@ def mf_front_end():
 
     b_input=True
     if b_input:
-        path = r'C:\Users\elfa3-extra\PycharmProjects\igloo_comtrader\venv'
+        path = os.getcwd()+r"\\conrad visuals\\"
         root = Tk()
         root.title("VISION: Auto-trading Platform")
         root.configure(background=d_colours["bg"]["main_frm"])
-        root.iconbitmap(path+"//conrad visuals//conrad_icon.ico")
+        root.iconbitmap(path+"conrad_icon.ico")
         root.geometry(f"{d_sizes['main_frm'][0]}x{d_sizes['main_frm'][1]}")
         root.resizable(width=False, height=False)
 
         # img_conrad_logo = ImageTk.PhotoImage(Image.open("conrad_logo_final.png"))
-        img_header = ImageTk.PhotoImage(Image.open(path+"//conrad visuals//vision_header_new.png"))
+        img_header = ImageTk.PhotoImage(Image.open(path+"vision_header_new.png"))
 
         # img_header_2 = ImageTk.PhotoImage(Image.open("vision_header.png"))
         # frm_main = LabelFrame(root, text="Main Frame", padx=0, pady=0, bg=bgc, bd = 2)
