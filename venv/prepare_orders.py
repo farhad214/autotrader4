@@ -30,7 +30,7 @@ tradable_sites = ["LANGE", "THEVE"]
 trade_shift_hours_only = False       # Trade only shift hours; specified in sp_desk.
 sp_desk = {"wd": {"start": 13, "end": 45}, "we": {"start": 19, "end": 43}}
 
-bb_out_of_must_run_only = True   # Don't buy-back within must-run; specified in sp_must_run & m_must_run.
+bb_out_of_must_run_only = True   # Don't buy-back within must-run; specified in sp_must_run & m_must_run.]
 sp_must_run = [33, 34, 35, 36, 37, 38]
 m_must_run = [1, 2, 11, 12]
 
