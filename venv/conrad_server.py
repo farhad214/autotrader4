@@ -7,10 +7,6 @@ import sqlalchemy as sql
 import numpy as np
 import itertools
 import ion as ion
-import __main__ as main
-import sys
-import inspect
-import log1 as log1
 import logging
 
 # Boolean for Logging content
@@ -93,7 +89,6 @@ def get_df_from_server(query_str, dt_rng):
     """
     # iterate over each day (1 to n_o_dt)
 
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
 
     for dt in dt_rng:
         dt_str = dt.strftime("%d-%b-%Y")
@@ -114,7 +109,6 @@ def get_df_from_server(query_str, dt_rng):
 
 def process_srmc(dfi, pp_gas_prompt):
 
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     dfr = dfi.copy()
 
     # # Make a copy of df_gas_forwards and chane column name for merging
@@ -233,7 +227,6 @@ def get_gas_forward_profile(df_av):
 
 def mf_conrad_server(check_id_prices=True):
 
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     # create a date range where start date is today and end date is today - input number of offset dates
     dt_rng = pd.date_range(end=datetime.today()-timedelta(days=0),periods=n_o_dt, normalize=True)[::-1]
 

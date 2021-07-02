@@ -3,7 +3,6 @@ import json
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-import __main__ as main
 import sys
 
 # from constants import *
@@ -61,7 +60,6 @@ def get_wide_arrays_from_trades (dfi):
     return df_b_vol, df_s_vol, df_b_price, df_s_price, df_net_vol
 
 def return_content_from_etrm(q_type, token):
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
 
     if q_type == "use_trade_url":
         url = trade_url
@@ -122,7 +120,6 @@ def pivot_df_trades_for_net_vals(dfi):
     :param dfi: df_trades
     :return: a pivoted df_trades where the net of trades for a HH is returned.
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     dfr = dfi.copy()
     dfr2 = dfi.copy()
 
@@ -160,7 +157,6 @@ def pivot_df_trades_for_net_vals(dfi):
 
 def mf_igloo_etrm():
 
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     # Get token
     token = get_token()
 

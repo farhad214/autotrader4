@@ -7,10 +7,6 @@ from PIL import ImageTk, Image # # pip install Pillow
 import threading
 
 import logging
-import __main__ as main
-import sys
-import inspect
-import log1 as log1
 
 import time
 import pandas as pd
@@ -23,7 +19,6 @@ import conrad_server as conrad
 import igloo_etrm as etrm
 import gcp as gcp
 import prepare_orders as po
-import log1 as log1
 from trade import *
 
 # from constants import *
@@ -115,29 +110,28 @@ def mf_front_end():
             # We fill p_traded==NA because we'll need to do some arithmetics on this column later.
             dfr["p_traded"].fillna(p_inv, inplace=True)
 
-            df1 = dfr.loc[dfr.is_selling == False, :].sort_values(by=["sp", "p_traded"], ascending=False)
+            df1 = dfr.loc[dfr.is_selling == False, :].sort_values(by=["sp", "p_srmc"], ascending=[True,False])
             df2 = dfr.loc[dfr.is_selling == True, :].sort_values(by=["sp", "p_srmc"])
             dfr = pd.concat([df1, df2], ignore_index=True)
 
             # Create a dataframe of extreme values (min SRMC for vol. to ask & max traded for vol. to bid).
             df_p_ext = pd.pivot_table(data=dfr,
-                                      values=["p_srmc", "p_traded"],
+                                      values="p_srmc",
                                       index="sp",
-                                      aggfunc={'p_srmc': np.min, 'p_traded': np.max}).reset_index()
+                                      aggfunc=[np.min, np.max]).reset_index()
 
             # Rename columns with better labels
-            df_p_ext.rename(columns={"p_srmc": "p_srmc_min", "p_traded": "p_traded_max"}, inplace=True)
+            df_p_ext.columns = ["sp","p_srmc_min","p_srmc_max"]
+
+            # df_p_ext.rename(columns={"sp/":"sp","amin/p_srmc": "p_srmc_min", "amax/p_srmc": "p_srmc_max"}, inplace=True)
 
             # Merge dfr with extreme prices on sp.
             dfr = pd.merge(dfr, df_p_ext, on="sp", how="left")
 
-            # Pick price that is going to be used for grouping: p_srmc for ask-side, p_traded for bid-side.
-            dfr["grp_price"] = np.where(dfr["is_selling"], dfr["p_srmc"], dfr["p_traded"])
-
             # Calculate the difference & between price & extreme price & divide it by input step size.
             dfr["grp_price"] = (np.where(dfr["is_selling"],
                                          dfr["p_srmc"] - dfr["p_srmc_min"],
-                                         dfr["p_traded_max"] - dfr["p_traded"]) / p_asset_grp_step_size)
+                                         dfr["p_srmc_max"] - dfr["p_srmc"]) / p_asset_grp_step_size)
 
             # Then rounddown (floor) to get an integer
             dfr["grp_price"] = dfr["grp_price"].apply(np.floor)
@@ -188,7 +182,7 @@ def mf_front_end():
 
             dfr.drop(
                 labels=
-                ["p_srmc_min", "p_traded_max", "grp_price", "mw_grp_sum", "grp_is_too_large", "mw_incremental_sum",
+                ["p_srmc_min", "grp_price", "mw_grp_sum", "grp_is_too_large", "mw_incremental_sum",
                  "grp_volume"],
                 axis=1,
                 inplace=True
@@ -384,7 +378,6 @@ def mf_front_end():
 
         for record in tv_asset_b.get_children():
             tv_asset_b.delete(record)
-        # df.sort_values(by=["sp", "int_grp", "lvl"], inplace=True)
         df_tv_asset_b = df.loc[df["is_selling"]==False,["prod_gr","mw_to_trade","p_traded","p_srmc","lvl"]]
         for index, row in df_tv_asset_b.iterrows():
 

@@ -6,10 +6,6 @@ import itertools
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
-import __main__ as main
-import sys
-import inspect
-import log1 as log1
 import logging
 
 # Boolean for Logging content
@@ -80,7 +76,6 @@ def get_unique_site_names(df_av, df_srmc):
         This function returns the unique site names.
     """
     # Get sorted, unique site names (sn)
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     sn = np.concatenate((df_av["SiteID"].unique(),df_srmc["siteid"].unique()), axis=None)
     sn = np.sort(np.unique(sn, axis=None))
 
@@ -132,7 +127,6 @@ def format_dfo(dfi, df_trades, df_av, df_srmc):
         c. It calculated mw_traded as mw; where it is stored as mwh in igloo etrm & fill nan values with 0.
 
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     cl_original = ["date","sites","st","is_selling","timestamp",
                    "sp","igloo_product","Volume","VWAP","MWExport","SRMC","ts_trades_checked"]
     cl_uniform = ["date","sites","st","is_selling","timestamp",
@@ -204,7 +198,6 @@ def flag_can_bb(dfi, now):
         The main input to this function is if we can bb during must-run period or not.
         Must-run period: [OCT-FEB];[16:00-19:00)
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     dfr = dfi.copy()
 
     if bb_out_of_must_run_only:
@@ -231,7 +224,6 @@ def flag_for_shift_sp(dfi, now):
     """
         This function flags if an entry on dfo is within Conrad's desk operation time or not.
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     dfr = dfi.copy()
 
     # day of the week
@@ -252,7 +244,6 @@ def flag_for_site_selection(dfi):
     """
         This function flags if a site is flagged to be included in the auto-trading procedures or not.
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     dfr = dfi.copy()
 
     if trade_selected_sites_only:
@@ -267,7 +258,6 @@ def flag_for_gc(dfi,now):
         This function flags if an order can
         be traded based on market and BM gate closures.
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     dfr = dfi.copy()
     if trade_hh_only:
         # Calc final moment before market & BM gate closures.
@@ -303,7 +293,6 @@ def calc_mw_to_trade(dfi):
     """
         This function calculates the tradable volume for each entry on dfo.
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     dfr = dfi.copy()
 
     # Column names which we'll use for function below
@@ -311,7 +300,6 @@ def calc_mw_to_trade(dfi):
 
     def get_vol(x):
 
-        # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
         """
             Get volume based on a) is_selling, b) f_can_trade
         """
@@ -343,7 +331,6 @@ def flag_can_trade(dfi):
     """
         This function returns if an order is tradable or not.
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     dfr = dfi.copy()
 
     dfr["f_can_sell"] = (dfr["is_selling"] == True) & ((dfr["mw_av"] + dfr["mw_traded"])>=mw_to_trade_min)
@@ -361,7 +348,6 @@ def flag_isin_horizon(dfi):
         trade. e.g. if mkt_gc = 17:00 for an NBM site
         if n_prod_horizon = 2 => last tradable product == 18:00.
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     dfr = dfi.copy()
 
     if trade_hh_only:
@@ -384,7 +370,6 @@ def finalise_dfo(dfi, data_for_frontend_demo):
     This function takes connects all the flags that we've
     applied on potetial orders & returns only the compliant orders.
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     dfr = dfi.copy()
 
     # If HAWEN is unavailable during the testing phase, we can't continue as the content of the dfo = NULL.
@@ -405,6 +390,7 @@ def finalise_dfo(dfi, data_for_frontend_demo):
     # mf.prepare_orders(data_for_frontend_demo==False). This means that only selected sites will be traded.
 
     if data_for_frontend_demo == False:
+
         mask = (
                 dfr["f_can_bb"] &
                 dfr["f_open"] &
@@ -467,7 +453,6 @@ def mf_get_orders(df_av, df_srmc, dft, ts_trade_checked, data_for_frontend_demo)
     :param data_for_frontend_demo: should mf_get_orders return data for front-end or is it for posting orders on mkt?
     :return: dfo: dataframes of eligable orders
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     logging.info("mf_get_orders is initiated.")
 
     site_names = get_unique_site_names(df_av, df_srmc)

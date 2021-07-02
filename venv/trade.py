@@ -9,11 +9,6 @@ import itertools
 import math
 from prepare_orders import *
 from dateutil import parser
-
-import __main__ as main
-import sys
-import inspect
-import log1 as log1
 import logging
 
 # Boolean for Logging content
@@ -140,7 +135,6 @@ schema_m7 = "m7"
 r_otr_thresh= 0.95
 
 def get_igloo_depth(token, products):
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + token}
     dfr = pd.DataFrame()
     for product in products:
@@ -153,7 +147,6 @@ def get_igloo_depth(token, products):
 
 def get_orders_or_trades(token, ret_type="orders"):
 
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     cl_trades = ["order_id", "igloo_product", "trader", "site_name",
                  "is_selling", "p_trade", "mw_trade", "trade_time"]
 
@@ -181,7 +174,8 @@ def get_orders_or_trades(token, ret_type="orders"):
                  x["Price"], x["Volume"], x["TradeTime"]]
             dfr.loc[dfr.shape[0], :] = v
 
-        dfr["is_selling"] = np.where(dfr["is_selling"] == "Offer", True, False)
+        dfr["is_selling"] = np.where(dfr["is_selling"] == "Sell", True, False)
+
     elif ret_type=="merged":
 
         # we merge trades and orders. The reason for this is the strategy (site_name) field of trades query from igloo
@@ -224,7 +218,6 @@ def get_mkt_information(dfi):
         token: igloo-m7 token,
         dfm: dataframe with market orders, and token
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     # Get a token to connect to m7 Igloo.
     token = json.loads((requests.post(base_url + '/oauth/token', data=cred_m7)).text)["Token"]
 
@@ -248,7 +241,6 @@ def init_mkt_prices(dfm):
         p_mkt_b_max, p_mkt_o_min: maximum market bid & minimum market offer
         p_b_ul & p_o_ll: price of bid upper limit & offer lower limit
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     # select all bids|offers that are not own orders.
     df_b_mkt = dfm.loc[(dfm["IsOrder"] == False) & (dfm["Side"] == "Bid"), :]
     df_o_mkt = dfm.loc[(dfm["IsOrder"] == False) & (dfm["Side"] == "Offer"), :]
@@ -324,7 +316,6 @@ def calc_p_strategy(x):
         """
             This function returns all the strategy values that we want the script to return.
         """
-        # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
         r = x.copy()
 
         def apply_strategy(strategy, mkt_side, p_b_mkt_max=None, p_o_mkt_min=None):
@@ -334,7 +325,6 @@ def calc_p_strategy(x):
                 Feel free to add more inputs if you have a strategy which would require inputs other than those
                 specified already.
             """
-            # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
             if strategy == "cto":
 
                 if mkt_side == "b":
@@ -380,7 +370,6 @@ def calc_p_strategy(x):
 
 def get_cl_strategy():
 
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     # column label prefix
     cl_prefix = ["p_b_", "p_o_"]
 
@@ -398,7 +387,6 @@ def calc_p_asset(dfi, asset_strategy, return_just_margin=False):
     :param asset_strategy: strategy which sets the lowest accepted profitability from the asset.
     :return: p_asset_b and p_asset_s.
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     dfr = dfi.copy()
 
     check_for_front_end_input=True
@@ -407,7 +395,6 @@ def calc_p_asset(dfi, asset_strategy, return_just_margin=False):
 
         def get_p_ref_bb(x):
 
-            # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
             p_traded_is_inv = (x["p_traded"] == p_inv)|(math.isnan(x["p_traded"]))
             if p_traded_is_inv:
                 p_ref_bb = x["p_srmc"]
@@ -450,7 +437,6 @@ def simplify_dfo(dfi, dfp, token):
     :param token: igloo-m7 token
     :return: returns a simlified, trimmed dfo
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     dfr = dfi.copy()
     dfp_int = dfp.copy()
 
@@ -467,7 +453,6 @@ def simplify_dfo(dfi, dfp, token):
 
     def get_p_to_trade(x):
 
-        # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
         if x["is_selling"]:
 
             if x[cl_fp["mkt"]] >= x[cl_fp["asset"]]:
@@ -526,7 +511,6 @@ def simplify_dfo(dfi, dfp, token):
 
 def post_new_order(token, product, site, is_selling, volume, price, is_active=True):
 
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     side = "Offer" if is_selling else "Bid"
     data = {
         "Market": "EPEX",
@@ -540,7 +524,6 @@ def post_new_order(token, product, site, is_selling, volume, price, is_active=Tr
         "Active": True,
         "AllOrNothing": False
     }
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + token}
 
     url = base_url + "/order/new"
@@ -551,7 +534,6 @@ def post_new_order(token, product, site, is_selling, volume, price, is_active=Tr
 
 def amend_order(token, order_id, volume, price, request_id='abc123', allornothing=False, text = "text1"):
 
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     data = {
         "RequestId": request_id,
         "Id": order_id,
@@ -568,7 +550,6 @@ def amend_order(token, order_id, volume, price, request_id='abc123', allornothin
 
 def cancel_order(id, token, request_id='abc123'):
 
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     data = {
         "RequestId": request_id,
         "Id": id
@@ -584,7 +565,6 @@ def get_earliest_tradable_product(site_type):
     :param site_type: BM|NBM
     :return:
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
 
     if trade_hh_only:
         now = datetime.now()
@@ -606,7 +586,6 @@ def submit_failed_attempt(dfi_row, j, order_status):
     :param j: json content returned by igloo-m7 platform
     :return: returns None => this function submits a failed attempt into internal SQL database.
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
 
     dfr_row = dfi_row.copy()
     dfr_row["comment"] = j["Text"]
@@ -633,7 +612,6 @@ def insert_order_on_db(x, j, post_order_type=None):
     :param amended_order: boolean which sets if a submitted order is an amendment (comes with x only)
     :return: none is returned. This is a function that sorts out your internal database arrangement.
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     if j is None:
         pass
     else:
@@ -718,7 +696,6 @@ def get_post_order_type(mw_ordered=None, p_ordered=None, p_to_trade=None):
     :return: Returns the post order type out of: new, amended, cancelled.
     Note that a cancelled order is one that is niether new, nor amended
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
 
     if mw_ordered != mw_ordered:
         r = "new"
@@ -733,7 +710,6 @@ def get_post_order_type(mw_ordered=None, p_ordered=None, p_to_trade=None):
 
 def submit_a_post_order(x):
 
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     if x["high_r_ot"]==False:
         post_order_type = get_post_order_type(mw_ordered=x["mw_ordered"],
                                               p_ordered=x["p_ordered"],
@@ -759,7 +735,6 @@ def submit_a_post_order(x):
 
 def get_active_order_details(dfi, dfm, orders):
     """Flag orders from dfo thLiat already exists on the market."""
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     dfr = dfi.copy()
     orders_i = orders.copy()
     orders_i = orders_i[(orders_i["is_active"])&(orders_i["trader"]=="smoody")]
@@ -814,7 +789,6 @@ def get_active_order_details(dfi, dfm, orders):
 
 def check_stop_autotrader_status(token=None):
 
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     q = "SELECT autotrader_status from " + schema_m7 + "." + tbl_autotrader_status + ";"
     autotrader_status = gcp.query_postgresql(q).iloc[0,0]
 
@@ -855,7 +829,6 @@ def check_stop_autotrader_status(token=None):
 
 def get_trades(token, order_id =None, trade_date=None, trade_time = None, product=None, id=None, market = "EPEX", account=None,
                strategy=None, side=None, price=None, volume=None, text = None):
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + token}
 
     data = {
@@ -885,7 +858,6 @@ def get_trades(token, order_id =None, trade_date=None, trade_time = None, produc
     return json.loads(response.text)
 
 def check_inactive_orders(token, df_sql, dfm, trades):
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     if df_sql is not None:
         dfr = df_sql.copy()
         dfm_i = dfm.copy()
@@ -930,7 +902,6 @@ def check_inactive_orders(token, df_sql, dfm, trades):
 
 def get_orders(token, status="all", product=None):
 
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + token}
 
     if product != None:
@@ -950,7 +921,6 @@ def get_orders(token, status="all", product=None):
 
 def calc_otr(trades, orders, dfo):
 
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     dfr = dfo.copy()
     no_orders = False
     no_trades = False
@@ -997,7 +967,6 @@ def calc_otr(trades, orders, dfo):
 
 def get_strategies(dfo):
 
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     if trade_hh_only:
         sites = dfo["sites"].unique()
         strategies = ["asset", "mkt"]
@@ -1022,7 +991,6 @@ def get_strategies(dfo):
 
 def remove_multiple_orders_by_product_by_side(o,token):
 
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     fa = o.loc[(o.trader == "smoody") & (o.is_active == True) & (o.is_selling == True), :].copy()
     fb = o.loc[(o.trader=="smoody")& (o.is_active==True) & (o.is_selling==False),:].copy()
 
@@ -1045,7 +1013,6 @@ def check_order_competitiveness(x, token):
     :param token: required for igloo m7 access
     :return: bool which specifies if x is the most competitive order to be set on market.
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     # get all m7 orders on market
     o = get_orders_or_trades(token, ret_type="orders")
 
@@ -1101,7 +1068,6 @@ def check_order_competitiveness(x, token):
 
 def check_if_traded_after_last_ts_check(token, x):
 
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     m = get_orders_or_trades(token, ret_type="merged")
     now=pd.to_datetime("today")
 
@@ -1134,10 +1100,8 @@ def cancel_hanging_orders(token):
     moment of delivery. Limit orders sometimes stays untraded on the market and we need a mechanism that removes those
     orders once the auto-trader considers them expired. This function does that
     """
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
 
     def get_sp_from_igloo_product(x):
-        if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
         # sp string
         sp_str = ""
         for s in x:

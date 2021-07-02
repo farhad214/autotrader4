@@ -3,11 +3,6 @@ import pyodbc
 import psycopg2
 import pandas as pd
 
-import __main__ as main
-import sys
-import inspect
-import log1 as log1
-
 # Boolean for Logging content
 blc = True
 
@@ -75,7 +70,6 @@ def read_from_mssql(query_str, cn_inp=""):
     return df
 
 def query_postgresql(q, select_query = True):
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
 
     engine = get_postgresql_engine ()
     connection = engine.connect ()
@@ -95,7 +89,6 @@ def query_postgresql(q, select_query = True):
     return dfr
 
 def write_to_postgresql(dfi, tbl_name, schema_name, if_exists="append"):
-    # if blc: log1.log_content(inspect.stack()[0][3], (main.__file__).split("/")[-1])
     engine = get_postgresql_engine()
     connection = engine.connect()
     dfi.to_sql(tbl_name, con=engine, if_exists=if_exists, index=False, schema=schema_name)

@@ -135,10 +135,8 @@ import time
 import numpy as np
 from requests.auth import HTTPBasicAuth
 from datetime import timezone
-import __main__ as main
-import sys
 import inspect
-import log1 as log1
+
 
 # Boolean for Logging content
 blc = True
