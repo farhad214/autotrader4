@@ -78,6 +78,7 @@ def get_unique_site_names(df_av, df_srmc):
     # Get sorted, unique site names (sn)
     sn = np.concatenate((df_av["SiteID"].unique(),df_srmc["siteid"].unique()), axis=None)
     sn = np.sort(np.unique(sn, axis=None))
+    logging.info("unique sites-process")
 
     return sn
 
@@ -116,7 +117,7 @@ def init_dfo(df_av, df_srmc, site_names):
               "want to to apply strategy to 2H & 4H products as well.")
 
     # Rearrange columns & return.
-    logging.info("dfo is initiated.")
+    logging.info("initiate dfo-process")
     return dfr[cn_index]
 
 def format_dfo(dfi, df_trades, df_av, df_srmc):
@@ -189,7 +190,7 @@ def format_dfo(dfi, df_trades, df_av, df_srmc):
     dfr["mw_traded"]=dfr["mw_traded"]*2
     dfr["mw_traded"].fillna(0,inplace=True)
 
-    logging.info("dfo is formatted.")
+    logging.info("format dfo-process")
     return dfr
 
 def flag_can_bb(dfi, now):
@@ -217,7 +218,8 @@ def flag_can_bb(dfi, now):
     else:
         dfr["f_can_bb"] = True
 
-    logging.info("buyback condition is checked.")
+    logging.info("flg bb-process")
+
     return dfr["f_can_bb"]
 
 def flag_for_shift_sp(dfi, now):
@@ -237,7 +239,7 @@ def flag_for_shift_sp(dfi, now):
                                                              (x<sp_desk[dt]["end"]) else False)
     else:
         dfr["f_shift_sp"] = True
-    logging.info("shift time condition is checked.")
+    logging.info("flg shift sp-process")
     return dfr["f_shift_sp"]
 
 def flag_for_site_selection(dfi):
@@ -250,7 +252,7 @@ def flag_for_site_selection(dfi):
         dfr["f_sel_site"] = dfr["sites"].apply(lambda x: True if x in tradable_sites else False)
     else:
         dfr["f_sel_site"] = True
-    logging.info("selected sites condition is checked.")
+    logging.info("flg sites-process")
     return dfr["f_sel_site"]
 
 def flag_for_gc(dfi,now):
@@ -286,7 +288,7 @@ def flag_for_gc(dfi,now):
     else:
         print("At the time being, we're trade only HH products. Later on we'll need to work on a methodology"
               "that is inclusive of all products")
-    logging.info("gate closure conditions are checked.")
+    logging.info("flg gc-process")
     return dfr.loc[:, ["f_mkt_open", "f_bm_open","f_open"]]
 
 def calc_mw_to_trade(dfi):
@@ -338,7 +340,7 @@ def flag_can_trade(dfi):
 
     # f_can_trade is the result of two interim columns calculated above
     dfr["f_can_trade"] = np.where(dfr["is_selling"]==False,dfr["f_can_buy"],dfr["f_can_sell"])
-    logging.info("Can trade condition is checked.")
+    logging.info("flag can trade-process")
     return dfr["f_can_trade"]
 
 def flag_isin_horizon(dfi):
@@ -362,7 +364,7 @@ def flag_isin_horizon(dfi):
     else:
         print("For the time-being, we're only trading hh products."
               "Once we develop sth for 2h and 4h, insert the code here")
-    logging.info("Horizon condition is checked.")
+    logging.info("flg horizon-process")
     return dfr["f_isin_horizon"]
 
 def finalise_dfo(dfi, data_for_frontend_demo):
@@ -432,7 +434,7 @@ def finalise_dfo(dfi, data_for_frontend_demo):
             dfb = dfr.loc[dfr.is_selling==False,:].copy()
 
             if dfb.empty==False:
-                dfb.sort_values(by=["sp","p_traded"], ascending=[True,False], inplace=True)
+                dfb.sort_values(by=["sp","p_srmc"], ascending=[True,False], inplace=True)
                 dfb.drop_duplicates(subset=["sp"],keep="first",inplace=True)
 
             dfa= dfr.loc[dfr.is_selling==True,:].copy()
@@ -441,7 +443,8 @@ def finalise_dfo(dfi, data_for_frontend_demo):
                 dfa.drop_duplicates(subset=["sp"], keep="first", inplace=True)
 
             dfr = pd.concat([dfb,dfa],ignore_index=True).reset_index()
-    logging.info("dfo is finalised")
+    logging.info("finalise dfo-process")
+
     return dfr
 
 def mf_get_orders(df_av, df_srmc, dft, ts_trade_checked, data_for_frontend_demo):
@@ -453,7 +456,7 @@ def mf_get_orders(df_av, df_srmc, dft, ts_trade_checked, data_for_frontend_demo)
     :param data_for_frontend_demo: should mf_get_orders return data for front-end or is it for posting orders on mkt?
     :return: dfo: dataframes of eligable orders
     """
-    logging.info("mf_get_orders is initiated.")
+    logging.info("started")
 
     site_names = get_unique_site_names(df_av, df_srmc)
     dfo = init_dfo(df_av, df_srmc, site_names)

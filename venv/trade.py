@@ -10,6 +10,7 @@ import math
 from prepare_orders import *
 from dateutil import parser
 import logging
+import pytz
 
 # Boolean for Logging content
 blc = True
@@ -134,16 +135,13 @@ tbl_autotrader_status = "autotrader_status"
 schema_m7 = "m7"
 r_otr_thresh= 0.95
 
-def get_igloo_depth(token, products):
-    headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + token}
-    dfr = pd.DataFrame()
-    for product in products:
-        url = base_url+"/marketdata/depth"+"?product="+str(product)
-        response = requests.get(url, headers=headers)
-        j = json.loads(response.text)
-        dfr = pd.concat([dfr, pd.DataFrame(j["Bids"]),pd.DataFrame(j["Offers"])])
-    logging.info("Market depth (igloo) is pulled.")
-    return dfr
+
+def convert_to_ukt(x, localise=True):
+    ts= pytz.timezone("UTC").localize(x).astimezone(pytz.timezone("Europe/London"))
+    if localise:
+        ts = ts.tz_localize(None)
+    return ts
+
 
 def get_orders_or_trades(token, ret_type="orders"):
 
@@ -165,6 +163,12 @@ def get_orders_or_trades(token, ret_type="orders"):
 
         dfr["is_selling"] = np.where(dfr["is_selling"] == "Offer", True, False)
 
+        dfr["created_time"] = pd.to_datetime(dfr["created_time"]).apply(lambda x: x.tz_localize(None))
+        dfr["amended_time"] = pd.to_datetime(dfr["amended_time"]).apply(lambda x: x.tz_localize(None))
+        dfr["created_time"] = dfr["created_time"].apply(convert_to_ukt)
+        dfr["amended_time"] = dfr["amended_time"].apply(convert_to_ukt)
+        logging.info("m7 orders-process")
+
     elif ret_type == "trades":
         t = get_trades(token)
 
@@ -175,6 +179,10 @@ def get_orders_or_trades(token, ret_type="orders"):
             dfr.loc[dfr.shape[0], :] = v
 
         dfr["is_selling"] = np.where(dfr["is_selling"] == "Sell", True, False)
+        dfr["trade_time"] = pd.to_datetime(dfr["trade_time"]).apply(lambda x: x.tz_localize(None))
+        dfr["trade_time"] = dfr["trade_time"].apply(convert_to_ukt)
+
+        logging.info("m7 trades-process")
 
     elif ret_type=="merged":
 
@@ -187,12 +195,12 @@ def get_orders_or_trades(token, ret_type="orders"):
         # Pull trades and orders from igloo m7 api
         t = get_orders_or_trades(token,"trades")
 
-        now_str = pd.to_datetime("today").strftime("%Y%M%d%H%M%S--%Y-%M-%d-%H-%M-%S")
+        now_str = pd.to_datetime("today").strftime("%Y%m%d%H%M%S--%Y-%M-%d-%H-%M-%S")
         t.to_csv("E://igloo_trades//" + now_str + ".csv", index=False, line_terminator='\n')
 
         o = get_orders_or_trades(token,"orders")
 
-        now_str = pd.to_datetime("today").strftime("%Y%M%d%H%M%S--%Y-%M-%d-%H-%M-%S")
+        now_str = pd.to_datetime("today").strftime("%Y%m%d%H%M%S--%Y-%M-%d-%H-%M-%S")
         o.to_csv("E://igloo_orders//" + now_str + ".csv", index=False, line_terminator='\n')
 
         # Merge them by order id
@@ -220,6 +228,7 @@ def get_mkt_information(dfi):
     """
     # Get a token to connect to m7 Igloo.
     token = json.loads((requests.post(base_url + '/oauth/token', data=cred_m7)).text)["Token"]
+    logging.info("token-m7api")
 
     # get a distinct list of igloo products that we will query.
     products = dfi["igloo_product"].unique()
@@ -266,6 +275,7 @@ def init_mkt_prices(dfm):
             dfr.index.names = [il_output]
             # dfr.rename(index={cl_piv_ind:il_output}, inplace=True)
             return dfr
+
         def fill_own_price_cols(dfi):
             """
             :param dfi: merged df that holds market prices
@@ -309,6 +319,8 @@ def init_mkt_prices(dfm):
     # dfr: keeps all the relevant market prices: market prices & strategy prices.
     cl_mkt_strategy = get_cl_strategy()
     dfr.loc[:, cl_mkt_strategy] = np.nan
+
+    logging.info("calc p_mkt-process")
 
     return dfr
 
@@ -408,10 +420,14 @@ def calc_p_asset(dfi, asset_strategy, return_just_margin=False):
             q = q + 'order by fe.prod_gr_fe, ag.sp, fe.timestamp;'
 
             df_fe = gcp.query_postgresql(q)
+            logging.info("select asset groups-sql")
+
             if df_fe is not None:
                 df_fe.drop_duplicates(subset=["prod_gr_fe","sites"], keep="last", inplace=True)
                 dfr = pd.merge(dfr, df_fe.loc[:, ["sp", "is_selling", "sites", "p_trader"]],
                                on=["sp", "is_selling", "sites"], how="left")
+                logging.info("merge asset groups with dfo-process")
+
             else:
                 dfr["p_trader"] = np.nan
 
@@ -426,7 +442,7 @@ def calc_p_asset(dfi, asset_strategy, return_just_margin=False):
         print("Asset strategy governs the profitability that we're happy to sell at. At the time being, we're "
               "just using a simple minimum margin on top of p_srmc + 0.01 for selling & p_srmc - 0.01 for"
               "buying-back. Later we will develop more strategies which will further enable churning.")
-    logging.info("Asset prices are calculated.")
+    logging.info("calc p_asset-process")
     return dfr
 
 def simplify_dfo(dfi, dfp, token):
@@ -506,59 +522,9 @@ def simplify_dfo(dfi, dfp, token):
             if (col in cl_fp==False)|(col[:4] in ["p_b_","p_o_"]):
                 del_cols.append(col)
         dfr.drop(del_cols, axis=1, inplace=True)
+    logging.info("simplify dfo-process")
 
     return dfr
-
-def post_new_order(token, product, site, is_selling, volume, price, is_active=True):
-
-    side = "Offer" if is_selling else "Bid"
-    data = {
-        "Market": "EPEX",
-        "Product": product,
-        "Trader": "smoody",
-        "Strategy":site,
-        "OrderType": "Limit",
-        "Side": side,
-        "Price": price,
-        "Volume": volume,
-        "Active": True,
-        "AllOrNothing": False
-    }
-    headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + token}
-
-    url = base_url + "/order/new"
-
-    response = requests.post(url, headers=headers, data=data)
-    logging.info("Order is (igloo) posted.")
-    return json.loads(response.text)
-
-def amend_order(token, order_id, volume, price, request_id='abc123', allornothing=False, text = "text1"):
-
-    data = {
-        "RequestId": request_id,
-        "Id": order_id,
-        "Price": price,
-        "Volume": volume,
-        "AllOrNothing": allornothing,
-        "Text": text
-    }
-    headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + token}
-    url = base_url + "/order/amend"
-    response = requests.post(url, headers=headers, data=data)
-    logging.info("Order is (igloo) amended.")
-    return json.loads(response.text)
-
-def cancel_order(id, token, request_id='abc123'):
-
-    data = {
-        "RequestId": request_id,
-        "Id": id
-    }
-    headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + token}
-    url = base_url + "/order/cancel"
-    response = requests.post(url, headers=headers, data=data)
-    logging.info("Order is cancelled.")
-    return json.loads(response.text)
 
 def get_earliest_tradable_product(site_type):
     """
@@ -600,7 +566,7 @@ def submit_failed_attempt(dfi_row, j, order_status):
 
         # Execute the query
         _ = gcp.query_postgresql(q, select_query=False)
-    logging.info("Failed attempt is submitted.")
+    logging.info("submit failed attempt-sql")
 
 def insert_order_on_db(x, j, post_order_type=None):
 
@@ -686,7 +652,8 @@ def insert_order_on_db(x, j, post_order_type=None):
 
             else:
                 print("Code shouldn't end up here.")
-    logging.info("Order is submitted on PostgreSQL.")
+    logging.info("insert order internally-sql")
+
 def get_post_order_type(mw_ordered=None, p_ordered=None, p_to_trade=None):
 
     """
@@ -730,6 +697,7 @@ def submit_a_post_order(x):
             print("Invalid post order type")
     else:
         print("OTR is too high!")
+    logging.info("submit post order-process")
 
     return j, post_order_type
 
@@ -784,10 +752,11 @@ def get_active_order_details(dfi, dfm, orders):
     else:
         print("Igloo is supposed to provide us with a solution that we won't "
               "need to store live orders on an internal database")
-    logging.info("Get active order details from PostgreSQL.")
+    logging.info("get active orders internally-sql")
+
     return dfr.loc[:,cl_ordered], df_sql
 
-def check_stop_autotrader_status(token=None):
+def check_status(token=None):
 
     q = "SELECT autotrader_status from " + schema_m7 + "." + tbl_autotrader_status + ";"
     autotrader_status = gcp.query_postgresql(q).iloc[0,0]
@@ -824,8 +793,74 @@ def check_stop_autotrader_status(token=None):
         logging.info("Check autotrader status.")
         return autotrader_status
 
-    logging.info("Check autotrader status.")
+    logging.info("check autotrader status-sql")
     return autotrader_status
+
+
+def post_new_order(token, product, site, is_selling, volume, price, is_active=True):
+    side = "Offer" if is_selling else "Bid"
+    data = {
+        "Market": "EPEX",
+        "Product": product,
+        "Trader": "smoody",
+        "Strategy": site,
+        "OrderType": "Limit",
+        "Side": side,
+        "Price": price,
+        "Volume": volume,
+        "Active": True,
+        "AllOrNothing": False
+    }
+    headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + token}
+
+    url = base_url + "/order/new"
+
+    response = requests.post(url, headers=headers, data=data)
+    logging.info("post new order-m7api")
+
+    return json.loads(response.text)
+
+
+def amend_order(token, order_id, volume, price, request_id='abc123', allornothing=False, text="text1"):
+    data = {
+        "RequestId": request_id,
+        "Id": order_id,
+        "Price": price,
+        "Volume": volume,
+        "AllOrNothing": allornothing,
+        "Text": text
+    }
+    headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + token}
+    url = base_url + "/order/amend"
+    response = requests.post(url, headers=headers, data=data)
+    logging.info("amend order-m7api")
+    return json.loads(response.text)
+
+
+def cancel_order(id, token, request_id='abc123'):
+    data = {
+        "RequestId": request_id,
+        "Id": id
+    }
+    headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + token}
+    url = base_url + "/order/cancel"
+    response = requests.post(url, headers=headers, data=data)
+    logging.info("cancel order-m7api")
+    return json.loads(response.text)
+
+def get_igloo_depth(token, products):
+
+    headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + token}
+    dfr = pd.DataFrame()
+
+    for product in products:
+        url = base_url+"/marketdata/depth"+"?product="+str(product)
+        response = requests.get(url, headers=headers)
+        j = json.loads(response.text)
+        dfr = pd.concat([dfr, pd.DataFrame(j["Bids"]),pd.DataFrame(j["Offers"])])
+    logging.info("get market depth-m7api")
+
+    return dfr
 
 def get_trades(token, order_id =None, trade_date=None, trade_time = None, product=None, id=None, market = "EPEX", account=None,
                strategy=None, side=None, price=None, volume=None, text = None):
@@ -854,7 +889,26 @@ def get_trades(token, order_id =None, trade_date=None, trade_time = None, produc
 
 
     response = requests.get(url, headers=headers, data = data)
-    logging.info("Get trades(igloo).")
+    logging.info("get trades-m7api")
+    return json.loads(response.text)
+
+def get_orders(token, status="all", product=None):
+
+    headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + token}
+
+    if product != None:
+        url = base_url + "/order/orders" +"?"+str(product)
+    else:
+        url = base_url + "/order/orders"
+
+    if status=="all":
+        url = url
+    else:
+        is_active = True if status =="active" else False
+        url = url + "&active=" + str(is_active)
+
+    response = requests.get(url, headers=headers)
+    logging.info("get orders-m7api")
     return json.loads(response.text)
 
 def check_inactive_orders(token, df_sql, dfm, trades):
@@ -898,26 +952,7 @@ def check_inactive_orders(token, df_sql, dfm, trades):
                     _ = gcp.query_postgresql(q, select_query=False)
             else:
                 print("Fill this section when you start trading 2h, 4h products")
-    logging.info("Check inactive orders")
-
-def get_orders(token, status="all", product=None):
-
-    headers = {'Accept': 'application/json', 'Authorization': 'Bearer ' + token}
-
-    if product != None:
-        url = base_url + "/order/orders" +"?"+str(product)
-    else:
-        url = base_url + "/order/orders"
-
-    if status=="all":
-        url = url
-    else:
-        is_active = True if status =="active" else False
-        url = url + "&active=" + str(is_active)
-
-    response = requests.get(url, headers=headers)
-    logging.info("Orders (igloo) are pulled.")
-    return json.loads(response.text)
+    logging.info("check inactive orders internally-sql")
 
 def calc_otr(trades, orders, dfo):
 
@@ -962,7 +997,8 @@ def calc_otr(trades, orders, dfo):
     dfr["high_r_ot"] = np.where(dfr["r_ot"] > r_otr_thresh, True, False)
     # dfr["r_ot"] = 0
     # dfr["high_r_ot"] = False
-    logging.info("OTR is calculated.")
+    logging.info("otr-process")
+
     return dfr
 
 def get_strategies(dfo):
@@ -986,6 +1022,7 @@ def get_strategies(dfo):
         print("2h & 4h products need further work.")
     # print(d)
     # dfo["asset_strategy"] = dfo.loc[:,["sites","sp"]].apply(lambda x: d["asset"][x["sites"]][])
+    logging.info("get strategies-process")
 
     return d
 
@@ -1063,18 +1100,18 @@ def check_order_competitiveness(x, token):
                     o_is_competitive = False
                 else:
                     cancel_order(i[1]["order_id"], token)
-    logging.info("Check order competitiveness.")
+    logging.info("order competitiveness-process")
     return o_is_competitive
 
-def check_if_traded_after_last_ts_check(token, x):
+def check_if_still_untraded(token, x):
 
-    m = get_orders_or_trades(token, ret_type="merged")
+    t = get_orders_or_trades(token, ret_type="trades")
     now=pd.to_datetime("today")
 
-    m["trade_time"] = pd.to_datetime(m["trade_time"])
-    j = m.loc[(m.site_name == x[1]["sites"]) &
-              (m.is_selling == x[1]["is_selling"]) &
-              (m.igloo_product == x[1]["igloo_product"])
+    t["trade_time"] = pd.to_datetime(t["trade_time"])
+    j = t.loc[(t.site_name == x[1]["sites"]) &
+              (t.is_selling == x[1]["is_selling"]) &
+              (t.igloo_product == x[1]["igloo_product"])
               ]
 
     # k = m.loc[(m.site_name=="FLINT")&(m.is_selling == True) & (m.igloo_product=="UKP HH15 THU")]
@@ -1145,13 +1182,13 @@ def cancel_hanging_orders(token):
                 cancel_order(order[1]["order_id"], token)
     else:
         print("It won't work with 2h or 4h products.")
-    logging.info("Cancel")
-def mf_trade(dfo):
+    logging.info("Check hanging orders-process")
 
+def mf_trade(dfo):
 
     if dfo.empty==False:
 
-        logging.info("mf_trade has started.")
+        logging.info("started")
 
         d = get_strategies(dfo)
 
@@ -1171,18 +1208,20 @@ def mf_trade(dfo):
 
         # Calculate the flagged strategy prices (all of them).
         dfp = dfp.apply(calc_p_strategy, axis=1)
+        logging.info("calc strategies-process")
 
         # Simplify dfo before submit; add columns that are the summary of multiple columns and delete interim columns.
         dfo = simplify_dfo(dfo, dfp, token)
 
         for x in dfo.iterrows():
 
-            autotrader_status = check_stop_autotrader_status(token)
+            autotrader_status = check_status(token)
 
             if autotrader_status==False:
                 return autotrader_status
 
-            has_traded_after_last_check = check_if_traded_after_last_ts_check(token, x)
+            has_traded_after_last_check = check_if_still_untraded(token, x)
+
             order_is_competitive = check_order_competitiveness(x, token)
             if (has_traded_after_last_check==False) & (order_is_competitive==True):
 
@@ -1198,7 +1237,7 @@ def mf_trade(dfo):
 
         print(pd.to_datetime("today").strftime("%H:%M:%S"))
 
-        autotrader_status = check_stop_autotrader_status(token)
+        autotrader_status = check_status(token)
 
         return autotrader_status
 

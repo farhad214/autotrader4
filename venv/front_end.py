@@ -66,7 +66,7 @@ def mf_front_end():
         filename=path
     )
 
-    logging.info("Autotrader is launched.")
+    logging.info("Start autotrader-frontend")
 
     global root
     update_without_clicking = True
@@ -281,15 +281,12 @@ def mf_front_end():
             elif x["gr_type"] == "sp":
                 return ("HH" + x["s_sp"] + "-" + "All")
 
-        logging.info("Update button is pressed")
+        logging.info("Update fields-frontend")
         df_av, df_srmc = conrad.mf_conrad_server(True)
-        logging.info("Availability and SRMC are imported.")
 
         dft, ts_trade_checked = etrm.mf_igloo_etrm()
-        logging.info("Trades are imported")
 
         dfo = po.mf_get_orders(df_av, df_srmc, dft, ts_trade_checked, data_for_frontend_demo=True)
-        logging.info("Order dataframe is created.")
 
         dfo = group_assets(dfo)
         logging.info("Assets are grouped.")

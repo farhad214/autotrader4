@@ -143,7 +143,8 @@ def process_srmc(dfi, pp_gas_prompt):
 
     # there are multiple SRMC values for site x sp combos. Don't know why. Drop all except highest SRMC.
     dfr = dfr.drop_duplicates(subset=["settlementdate","siteid","settlementperiod"], keep="last")
-    logging.info("SRMC dataframe is processed")
+    logging.info("df_srmc-conrad_server")
+
     return dfr
 
 def get_wide_srmc(dfi):
@@ -226,6 +227,7 @@ def get_gas_forward_profile(df_av):
     return dfr
 
 def mf_conrad_server(check_id_prices=True):
+    logging.info("started")
 
     # create a date range where start date is today and end date is today - input number of offset dates
     dt_rng = pd.date_range(end=datetime.today()-timedelta(days=0),periods=n_o_dt, normalize=True)[::-1]
@@ -233,14 +235,17 @@ def mf_conrad_server(check_id_prices=True):
     df_av = get_df_from_server("av", dt_rng)
     df_av.sort_values(by=["SiteID","SettlementPeriod","LastUpdated"],inplace=True)
     df_av.drop_duplicates(subset=["SiteID","SettlementPeriod"],keep='last',inplace=True)
-    logging.info("Availability dataframed is filled.")
+    logging.info("df_av-import")
+
     # pull values from the sql server.
     df_srmc = get_df_from_server("srmc", dt_rng)
     # df_gas_forwards = get_gas_forward_profile(df_av)
-    logging.info("SRMC dataframe is filled.")
+    logging.info("SRMC-import")
+
     if check_id_prices:
         q = "select * from m7.id_gas where inserted_time=(select max(inserted_time) from m7.id_gas);"
         df_gas_id = gcp.query_postgresql(q)
+        logging.info("pp_gas_id-sql")
         ts_most_recent_id_gas = df_gas_id.loc[0,"inserted_time"]
         new_id_gas_is_needed = pd.to_datetime("today") - timedelta(hours=n_hour_new_id_gas_thresh) > ts_most_recent_id_gas
 
@@ -248,9 +253,11 @@ def mf_conrad_server(check_id_prices=True):
             pp_gas_prompt = df_gas_id.loc[0,"p_id_gas"]
         else:
             df_gas_co = get_df_from_server("gas_co", dt_rng)
+            logging.info("pp_gas_co-sql")
             pp_gas_prompt = df_gas_co.loc[df_gas_co["tag"] == "SAP", "Price"][0]
     else:
         df_gas_co = get_df_from_server("gas_co", dt_rng)
+        logging.info("pp_gas_co-sql")
         pp_gas_prompt = df_gas_co.loc[df_gas_co["tag"] == "SAP", "Price"][0]
 
 

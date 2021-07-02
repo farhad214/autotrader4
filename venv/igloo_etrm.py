@@ -3,6 +3,7 @@ import json
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+import logging
 import sys
 
 # from constants import *
@@ -20,7 +21,7 @@ def get_token():
     url = base_url + token_url
     response = requests.post(url, data=credentials)
     token = json.loads(response.text)["Token"]
-
+    logging.info("token-api")
     return token
 
 def get_wide_arrays_from_trades (dfi):
@@ -111,7 +112,7 @@ def return_content_from_etrm(q_type, token):
 
     # For some reason the query filtering does not work; therefore, we do a filter for all today's trades.
     dfr = dfr[(dfr["ScheduleDate"] >= s_start) & (dfr["ScheduleDate"] < s_end)]
-
+    logging.info("pull initial dft-api")
     return dfr, ts_trade_checked
 
 def pivot_df_trades_for_net_vals(dfi):
@@ -152,14 +153,13 @@ def pivot_df_trades_for_net_vals(dfi):
 
     #Recreate Buysell flag
     dfr["BuySell"] = np.where(dfr["Volume"]<0,True,False)
-
+    logging.info("pivot dft-process")
     return dfr
 
 def mf_igloo_etrm():
-
+    logging.info("started")
     # Get token
     token = get_token()
-
     # Return content from igloo etrm: asset trade summary
     # q = "get_asset_trade_summary"
     q_type = "use_trade_url"
