@@ -621,7 +621,7 @@ def insert_order_on_db(x, j, post_order_type=None):
             mw_order, p_order, p_margin, price_setter, p_asset, p_mkt, p_ool, r_ot
         ]
         if j["Success"]==False:
-            submit_failed_attempt(df_row, j, post_order_type)
+            print(j["Text"])
         else:
 
             if order_status=="new":
@@ -985,11 +985,13 @@ def calc_otr(trades, orders, dfo):
         piv["r_ot"] = (piv["n_orders"]/(piv["n_trades"]+1))/100
 
     elif (no_orders==False) & (no_trades==True):
-        piv = piv_t
-        piv["r_ot"] = (n_orders/(piv["n_trades"]+1))/100
-    elif (no_orders == True) & (no_trades == False):
         piv = piv_o
-        piv["r_ot"] = (piv["n_orders"]/(n_trades+1))/100
+        piv["r_ot"] = piv["n_orders"]/100
+    elif (no_orders == True) & (no_trades == False):
+        print("I think no_order=True and no_trade=False can never happen. If you see this on screen"
+              " then it has happened.")
+    #     piv = piv_t
+    #     piv["r_ot"] = (piv["n_orders"]/(n_trades+1))/100
 
     piv.reset_index(inplace=True)
     dfr = dfr.merge(piv.loc[:, ["igloo_product", "r_ot"]], left_on="igloo_product", right_on="igloo_product", how="left")
@@ -1127,7 +1129,7 @@ def check_if_still_untraded(token, x):
     else:
         r = False
 
-    logging.info("Check if order has traded since we checked dft.")
+    logging.info("check untradedness-process")
     return r
 
 def cancel_hanging_orders(token):

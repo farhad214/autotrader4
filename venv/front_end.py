@@ -66,7 +66,7 @@ def mf_front_end():
         filename=path
     )
 
-    logging.info("Start autotrader-frontend")
+    logging.info("Load autotrader-frontend")
 
     global root
     update_without_clicking = True
@@ -281,7 +281,7 @@ def mf_front_end():
             elif x["gr_type"] == "sp":
                 return ("HH" + x["s_sp"] + "-" + "All")
 
-        logging.info("Update fields-frontend")
+
         df_av, df_srmc = conrad.mf_conrad_server(True)
 
         dft, ts_trade_checked = etrm.mf_igloo_etrm()
@@ -289,13 +289,13 @@ def mf_front_end():
         dfo = po.mf_get_orders(df_av, df_srmc, dft, ts_trade_checked, data_for_frontend_demo=True)
 
         dfo = group_assets(dfo)
-        logging.info("Assets are grouped.")
+        logging.info("group assets-process")
 
         dfa_gr = pvt_grps(dfo, at_grp=True, pvt_a=True)
         dfa_sp = pvt_grps(dfo, at_grp=False, pvt_a=True)
         dfb_gr = pvt_grps(dfo, at_grp=True, pvt_a=False)
         dfb_sp = pvt_grps(dfo, at_grp=False, pvt_a=False)
-        logging.info("Groups are pivoted.")
+        logging.info("pivot groups-process")
 
         df = pd.concat([dfb_gr, dfa_gr, dfb_sp, dfa_sp], ignore_index=True)
         dfo["gr_type"] = "asset"
@@ -323,14 +323,14 @@ def mf_front_end():
 
         df["parent"] = df.loc[:,["sp","gr_type","grp"]].apply(get_parent_grp,axis=1)
 
-        logging.info("Postprocessing of groups are accomplished.")
+        logging.info("postprocess groups-process")
         q = 'delete from m7.asset_groups;'
         gcp.query_postgresql(q, select_query=False)
         gcp.write_to_postgresql(df.loc[:,["prod_gr","parent", "sp", "gr_type", "grp", "sites",
                                           "mw_traded","mw_to_trade","p_traded","p_srmc",
                                           "lvl", "is_selling"]],
                                 "asset_groups", "m7")
-        logging.info("Asset groups are written on PosgreSQL.")
+        logging.info("insert asset groups-sql")
 
         def get_p_model_p_trader(df):
 
@@ -371,7 +371,7 @@ def mf_front_end():
             t2 = tuple(lst_cols)
             s_tag = row["prod_gr"][5]
             tv_mkt.insert(parent='', index="end", iid=index, text=row["prod_gr"], values=t2, tags = (s_tag))
-        logging.info("Market treeview is filled.")
+        logging.info("fill tv_mkt-process")
 
         for record in tv_asset_b.get_children():
             tv_asset_b.delete(record)
@@ -395,7 +395,7 @@ def mf_front_end():
 
         tv_asset_b.tag_configure("asset", background=d_colours["bg"]["main_frm"])
 
-        logging.info("Asset bid treeview is filled.")
+        logging.info("fill tv_asset_b-process")
 
         for record in tv_asset_a.get_children():
             tv_asset_a.delete(record)
@@ -419,10 +419,12 @@ def mf_front_end():
             tv_asset_a.insert(parent=str_parent, index="end", iid=index, text=row["prod_gr"], values=t2, tags=("asset"))
 
         tv_asset_a.tag_configure("asset", background=d_colours["bg"]["main_frm"])
-        logging.info("Asset ask treeview is filled.")
+        logging.info("fill tv_asset_a-process")
 
         q = 'select * from m7.id_gas where inserted_time = (select max(inserted_time) from m7.id_gas);'
         df_gas = gcp.query_postgresql(q)
+        logging.info("select p_gas_id-sql")
+
         ts =df_gas.loc[0,"inserted_time"].strftime("%Y-%m-%d %H:%M")
         p_id_gas = str(df_gas.loc[0,"p_id_gas"])
 
@@ -435,9 +437,10 @@ def mf_front_end():
 
         ts_str = pd.to_datetime("today").strftime("%H:%M:%S")
         lbl_statusbar.config(text=f"Fields are updated @ {ts_str}", fg="blue")
-        logging.info("Most recent ID gas & relevant processes are acomplished.")
+        logging.info("finalise p_gas_id-process")
 
     def start_autotrader():
+        logging.info("autotrader started")
 
         btn_start.config(state=DISABLED)
 
@@ -460,6 +463,7 @@ def mf_front_end():
 
             for id in autotrader_active_order_ids.iteritems():
                 cancel_order(id[1], token)
+            logging.info("clear active orders-process")
 
         def mf_main():
 
