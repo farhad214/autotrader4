@@ -52,8 +52,8 @@ sites = [
 # nbm_sites = []
 t_gc_market = 15                        # minutes before market gate closure.
 t_gc_bm = 60                            # minutes before BM gate closure.
-t_headroom = 3                          # assumed headroom time for processing.
-t_headroom_bm = 8                       # assumed extra headroom time for BM processing.
+t_headroom = 1                          # assumed headroom time for processing.
+t_headroom_bm = 10                       # assumed extra headroom time for BM processing.
 del_cols = True                         # Delete most of dfo's columns
 
 # Day abbreviations for day of the week function.
@@ -263,9 +263,11 @@ def flag_for_gc(dfi,now):
     """
     dfr = dfi.copy()
     if trade_hh_only:
+        t_mkt_tot = t_gc_market + t_headroom
+        t_bm_tot = t_gc_bm + t_headroom+t_headroom_bm
         # Calc final moment before market & BM gate closures.
-        dfr["ts_gc_mkt"] = dfr["timestamp"] - timedelta(minutes=t_gc_market + t_headroom)
-        dfr["ts_gc_bm"] = dfr["timestamp"] - timedelta(minutes=t_gc_bm + t_headroom+t_headroom_bm)
+        dfr["ts_gc_mkt"] = dfr["timestamp"] - timedelta(minutes=t_mkt_tot)
+        dfr["ts_gc_bm"] = dfr["timestamp"] - timedelta(minutes=t_bm_tot)
 
         # Mandatory flagging: Calculate the first tradable SP.
         dfr["f_mkt_open"] = dfr["ts_gc_mkt"].apply(lambda x: True if x > now else False)
