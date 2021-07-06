@@ -35,7 +35,7 @@ asset_strategy = "basic"
 p_increment = 0.01
 
 # Minimum margin on offering in market (for basic asset strategies)
-p_o_margin_min = 15
+p_o_margin_min = 10
 
 # If this is true; then the strategy will pick the top order.
 # An alternative can /be to pick the top 5 MW or some other logic that you can apply later.
@@ -167,6 +167,10 @@ def get_orders_or_trades(token, ret_type="orders"):
         dfr["amended_time"] = pd.to_datetime(dfr["amended_time"]).apply(lambda x: x.tz_localize(None))
         dfr["created_time"] = dfr["created_time"].apply(convert_to_ukt)
         dfr["amended_time"] = dfr["amended_time"].apply(convert_to_ukt)
+
+        now_str = pd.to_datetime("today").strftime("%Y%m%d%H%M%S--%Y-%M-%d-%H-%M-%S")
+        dfr.to_csv("E://igloo_orders//" + now_str + ".csv", index=False, line_terminator='\n')
+
         logging.info("m7 orders-process")
 
     elif ret_type == "trades":
@@ -181,6 +185,9 @@ def get_orders_or_trades(token, ret_type="orders"):
         dfr["is_selling"] = np.where(dfr["is_selling"] == "Sell", True, False)
         dfr["trade_time"] = pd.to_datetime(dfr["trade_time"]).apply(lambda x: x.tz_localize(None))
         dfr["trade_time"] = dfr["trade_time"].apply(convert_to_ukt)
+
+        now_str = pd.to_datetime("today").strftime("%Y%m%d%H%M%S--%Y-%M-%d-%H-%M-%S")
+        dfr.to_csv("E://igloo_trades//" + now_str + ".csv", index=False, line_terminator='\n')
 
         logging.info("m7 trades-process")
 
@@ -537,7 +544,7 @@ def get_earliest_tradable_product(site_type):
         if site_type == "nbm":
             ts = now + timedelta(minutes=t_gc_market+t_headroom)
         else:
-            ts = now + timedelta(minutes=t_gc_bm + t_headroom)
+            ts = now + timedelta(minutes=t_gc_bm + t_headroom+t_headroom_bm)
         sp = ts.hour*2+(2 if ts.minute >= n_mohh else 1) + 1
 
         return sp
@@ -927,7 +934,8 @@ def check_inactive_orders(token, df_sql, dfm, trades):
 
             if trade_hh_only:
                 dfr["st"] = np.where(dfr['site_name'].isin(bm_sites),"bm","nbm")
-                dfr["t_gc"] = np.where(dfr["st"]=="bm",t_gc_bm,t_gc_market) + t_headroom
+                t_gc_bm_total  = t_gc_bm+t_headroom_bm
+                dfr["t_gc"] = np.where(dfr["st"]=="bm",t_gc_bm_total , t_gc_market) + t_headroom
                 dfr["expiry_time"] = (
                         dfr["created_time"].dt.normalize() +
                         dfr.loc[:,"hh_id"].apply(lambda x: timedelta(minutes=((x-1)*n_mohh)))-
@@ -1107,26 +1115,45 @@ def check_order_competitiveness(x, token):
 
 def check_if_still_untraded(token, x):
 
+    # Pull trades from igloo m7 api.
     t = get_orders_or_trades(token, ret_type="trades")
+
     now=pd.to_datetime("today")
 
+    # Convert trade_time column to datetime type
     t["trade_time"] = pd.to_datetime(t["trade_time"])
+
+    # Filter trades to those instances that has the same site-name, same trade side, and same product.
     j = t.loc[(t.site_name == x[1]["sites"]) &
               (t.is_selling == x[1]["is_selling"]) &
               (t.igloo_product == x[1]["igloo_product"])
-              ]
+              ].copy()
 
-    # k = m.loc[(m.site_name=="FLINT")&(m.is_selling == True) & (m.igloo_product=="UKP HH15 THU")]
+    # Sort so that the most recent traded volume sits at top of the dataframe.
+    j.sort_values(by="trade_time",ascending=False, inplace=True)
+
     if j.empty == False:
+
+        # Latest timestamp that has traded.
         ts_last_traded = j["trade_time"].values[0]
+
+        # Latest timestamp that we pulled content from dft.
         ts_last_dfo_updated = x[1]["ts_trades_checked"]
 
         # last time a trade went thorough for this combination return true else false
         if ts_last_traded >= ts_last_dfo_updated:
+
+            # This means that for x prodct, y side, z asset => a trade after we checked etrm has gone through.
+            # Therefore, do not post this order.
             r = True
+
         else:
+
+            # No trades has gone through since we have updated from etrm. You can post your order.
             r = False
+
     else:
+        # No trades has gone through. You can post your order.
         r = False
 
     logging.info("check untradedness-process")
@@ -1169,7 +1196,7 @@ def cancel_hanging_orders(token):
 
         # Calculate gc for mkt and bm
         m["ts_gc_mkt"] = m["ts"] - timedelta(minutes= t_gc_market + t_headroom)
-        m["ts_gc_bm"] = m["ts"] - timedelta(minutes= t_gc_bm + t_headroom)
+        m["ts_gc_bm"] = m["ts"] - timedelta(minutes= t_gc_bm + t_headroom+t_headroom_bm)
 
         # flag if now
         m["f_mkt_open"] = m["ts_gc_mkt"].apply(lambda x: True if x > now else False)
@@ -1182,6 +1209,7 @@ def cancel_hanging_orders(token):
                 pass
             else:
                 cancel_order(order[1]["order_id"], token)
+                print("Cancelled hanging order.")
     else:
         print("It won't work with 2h or 4h products.")
     logging.info("Check hanging orders-process")
@@ -1224,16 +1252,20 @@ def mf_trade(dfo):
 
             has_traded_after_last_check = check_if_still_untraded(token, x)
 
-            order_is_competitive = check_order_competitiveness(x, token)
-            if (has_traded_after_last_check==False) & (order_is_competitive==True):
+            # If has_traded_after_last_check -> skip this order.
+            if has_traded_after_last_check:
+                print("Asset has traded since we checked dft in ETRM")
+                continue
 
-                j, post_order_type = submit_a_post_order(x[1])
-                insert_order_on_db(x[1], j, post_order_type)
-            else:
-                if has_traded_after_last_check == True:
-                    print("It would have been a double trade.")
-                else:
-                    print("Order is not competitive.")
+            order_is_competitive = check_order_competitiveness(x, token)
+
+            # If order is competitive ==False -> skip this order.
+            if order_is_competitive==False:
+                print("There is a more competitive order by another asset on the market.")
+                continue
+
+            j, post_order_type = submit_a_post_order(x[1])
+            insert_order_on_db(x[1], j, post_order_type)
 
         cancel_hanging_orders(token)
 

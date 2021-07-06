@@ -53,6 +53,7 @@ sites = [
 t_gc_market = 15                        # minutes before market gate closure.
 t_gc_bm = 60                            # minutes before BM gate closure.
 t_headroom = 3                          # assumed headroom time for processing.
+t_headroom_bm = 8                       # assumed extra headroom time for BM processing.
 del_cols = True                         # Delete most of dfo's columns
 
 # Day abbreviations for day of the week function.
@@ -60,7 +61,7 @@ day_abb = {0:"MON", 1:"TUE", 2:"WED", 3:"THU", 4:"FRI", 5:"SAT", 6:"SUN"}
 
 # Product horizon: how many products ahead of the first product out of gate closure, can the auto-trader trade at?
 # If you do not want to impose any such limitation n_prod_horizon = 48 will mean no restrictions.
-n_prod_horizon = 3
+n_prod_horizon = 2
 
 # Apply assumption; only initial testing phase.
 all_sites_are_hawen = False              # In case HAWEN is unavailable; to have some sites to trade with.
@@ -264,7 +265,7 @@ def flag_for_gc(dfi,now):
     if trade_hh_only:
         # Calc final moment before market & BM gate closures.
         dfr["ts_gc_mkt"] = dfr["timestamp"] - timedelta(minutes=t_gc_market + t_headroom)
-        dfr["ts_gc_bm"] = dfr["timestamp"] - timedelta(minutes=t_gc_bm + t_headroom)
+        dfr["ts_gc_bm"] = dfr["timestamp"] - timedelta(minutes=t_gc_bm + t_headroom+t_headroom_bm)
 
         # Mandatory flagging: Calculate the first tradable SP.
         dfr["f_mkt_open"] = dfr["ts_gc_mkt"].apply(lambda x: True if x > now else False)
