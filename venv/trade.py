@@ -26,7 +26,7 @@ mkt_strategies = ["mto", "cto"]
 inc_mkt_strategy = {"mto":True, "cto":True}
 
 # Market strategy
-strategy = "mto"
+strategy = "cto"
 
 # Asset strategy
 asset_strategy = "basic"
@@ -169,7 +169,7 @@ def get_orders_or_trades(token, ret_type="orders"):
         dfr["amended_time"] = dfr["amended_time"].apply(convert_to_ukt)
 
         now_str = pd.to_datetime("today").strftime("%Y%m%d%H%M%S--%Y-%M-%d-%H-%M-%S")
-        dfr.to_csv("E://igloo_orders//" + now_str + ".csv", index=False, line_terminator='\n')
+        # dfr.to_csv("E://igloo_orders//" + now_str + ".csv", index=False, line_terminator='\n')
 
         logging.info("m7 orders-process")
 
@@ -187,7 +187,7 @@ def get_orders_or_trades(token, ret_type="orders"):
         dfr["trade_time"] = dfr["trade_time"].apply(convert_to_ukt)
 
         now_str = pd.to_datetime("today").strftime("%Y%m%d%H%M%S--%Y-%M-%d-%H-%M-%S")
-        dfr.to_csv("E://igloo_trades//" + now_str + ".csv", index=False, line_terminator='\n')
+        # dfr.to_csv("E://igloo_trades//" + now_str + ".csv", index=False, line_terminator='\n')
 
         logging.info("m7 trades-process")
 
@@ -203,12 +203,12 @@ def get_orders_or_trades(token, ret_type="orders"):
         t = get_orders_or_trades(token,"trades")
 
         now_str = pd.to_datetime("today").strftime("%Y%m%d%H%M%S--%Y-%M-%d-%H-%M-%S")
-        t.to_csv("E://igloo_trades//" + now_str + ".csv", index=False, line_terminator='\n')
+        # t.to_csv("E://igloo_trades//" + now_str + ".csv", index=False, line_terminator='\n')
 
         o = get_orders_or_trades(token,"orders")
 
         now_str = pd.to_datetime("today").strftime("%Y%m%d%H%M%S--%Y-%M-%d-%H-%M-%S")
-        o.to_csv("E://igloo_orders//" + now_str + ".csv", index=False, line_terminator='\n')
+        # o.to_csv("E://igloo_orders//" + now_str + ".csv", index=False, line_terminator='\n')
 
         # Merge them by order id
         dfr = pd.merge(o.loc[:, ["order_id", "site_name","igloo_product","is_selling"]],
@@ -1263,7 +1263,7 @@ def mf_trade(dfo):
                 print("There is a more competitive order by another asset on the market.")
                 continue
 
-            j = submit_a_post_order(x[1])
+            # j = submit_a_post_order(x[1])
             insert_order_on_db(x[1], j)
 
         cancel_hanging_orders(token)

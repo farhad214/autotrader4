@@ -16,7 +16,8 @@ blc = True
 #######################################################################################################################
 
 trade_selected_sites_only = True    # Trade only sites in tradable_sites list.
-tradable_sites = ["LANGE", "THEVE","SANFT","MELAM"]
+tradable_sites = ["LANGE","SANFT","MELAM","PLYTH"]
+# tradable_sites = ["LANGE"]
 
 # tradable_sites = [
 #     'ALBON','ALCOA','AMPLL','ARNTT','BARLL','BENET','BISAM','CAEON','CHAEY','DOWII','DOWRM','FENON','FLINT','GOONE',
