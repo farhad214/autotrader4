@@ -26,7 +26,7 @@ mkt_strategies = ["mto", "cto"]
 inc_mkt_strategy = {"mto":True, "cto":True}
 
 # Market strategy
-strategy = "cto"
+strategy = "mto"
 
 # Asset strategy
 asset_strategy = "basic"
@@ -36,6 +36,10 @@ p_increment = 0.01
 
 # Minimum margin on offering in market (for basic asset strategies)
 p_o_margin_min = 10
+
+# Minimum margin on buying-back
+p_b_margin_min = 0.01
+
 
 # If this is true; then the strategy will pick the top order.
 # An alternative can /be to pick the top 5 MW or some other logic that you can apply later.
@@ -169,7 +173,7 @@ def get_orders_or_trades(token, ret_type="orders"):
         dfr["amended_time"] = dfr["amended_time"].apply(convert_to_ukt)
 
         now_str = pd.to_datetime("today").strftime("%Y%m%d%H%M%S--%Y-%M-%d-%H-%M-%S")
-        # dfr.to_csv("E://igloo_orders//" + now_str + ".csv", index=False, line_terminator='\n')
+        dfr.to_csv("E://igloo_orders//" + now_str + ".csv", index=False, line_terminator='\n')
 
         logging.info("m7 orders-process")
 
@@ -187,39 +191,9 @@ def get_orders_or_trades(token, ret_type="orders"):
         dfr["trade_time"] = dfr["trade_time"].apply(convert_to_ukt)
 
         now_str = pd.to_datetime("today").strftime("%Y%m%d%H%M%S--%Y-%M-%d-%H-%M-%S")
-        # dfr.to_csv("E://igloo_trades//" + now_str + ".csv", index=False, line_terminator='\n')
+        dfr.to_csv("E://igloo_trades//" + now_str + ".csv", index=False, line_terminator='\n')
 
         logging.info("m7 trades-process")
-
-    elif ret_type=="merged":
-
-        # we merge trades and orders. The reason for this is the strategy (site_name) field of trades query from igloo
-        # m7 api doesn't work. So we use order id from orders and merge trades on the left with orders. Once we have the
-        # merged trades and orders, we are interested to see when was the last trade that went thourough by asset,
-        # by product, and by is_selling values. This is to check it with the timestamp that we checked when we last
-        # evaluated the volumes available to trade from the dft dataframe.
-
-        # Pull trades and orders from igloo m7 api
-        t = get_orders_or_trades(token,"trades")
-
-        now_str = pd.to_datetime("today").strftime("%Y%m%d%H%M%S--%Y-%M-%d-%H-%M-%S")
-        # t.to_csv("E://igloo_trades//" + now_str + ".csv", index=False, line_terminator='\n')
-
-        o = get_orders_or_trades(token,"orders")
-
-        now_str = pd.to_datetime("today").strftime("%Y%m%d%H%M%S--%Y-%M-%d-%H-%M-%S")
-        # o.to_csv("E://igloo_orders//" + now_str + ".csv", index=False, line_terminator='\n')
-
-        # Merge them by order id
-        dfr = pd.merge(o.loc[:, ["order_id", "site_name","igloo_product","is_selling"]],
-                       t.loc[:, ["order_id", "p_trade", "mw_trade", "trade_time"]], on="order_id", how="left")
-
-        # Drom trade_time == Nan => orders that did trade.
-        dfr = dfr[dfr.trade_time.isna()==False]
-
-        # Sort values in order below so we can drop duplicates and only keep the most recent one
-        dfr.sort_values(by=["igloo_product", "site_name", "is_selling", "trade_time"], inplace=True)
-        dfr.drop_duplicates(subset=["site_name", "igloo_product", "is_selling"], inplace=True, keep="last")
 
     else:
         print("ret_type is incorrect.")
@@ -410,41 +384,43 @@ def calc_p_asset(dfi, asset_strategy, return_just_margin=False):
 
     check_for_front_end_input=True
 
+    if check_for_front_end_input:
+        q = 'select * from m7.fe_price_input fe left join m7.asset_groups ag on fe.prod_gr_fe = ag.parent '
+        q = q + 'where fe."timestamp">=CURRENT_DATE and ag.parent IS NOT NULL '
+        q = q + 'order by fe.prod_gr_fe, ag.sp, fe.timestamp;'
+
+        df_fe = gcp.query_postgresql(q)
+        logging.info("select asset groups-sql")
+
+        if df_fe is not None:
+            df_fe.drop_duplicates(subset=["prod_gr_fe","sites"], keep="last", inplace=True)
+            dfr = pd.merge(dfr, df_fe.loc[:, ["sp", "is_selling", "sites", "p_trader"]],
+                           on=["sp", "is_selling", "sites"], how="left")
+            logging.info("merge asset groups with dfo-process")
+
+        else:
+            dfr["p_trader"] = np.nan
+
     if asset_strategy == "basic":
-
-        def get_p_ref_bb(x):
-
-            p_traded_is_inv = (x["p_traded"] == p_inv)|(math.isnan(x["p_traded"]))
-            if p_traded_is_inv:
-                p_ref_bb = x["p_srmc"]
-            else:
-                p_ref_bb = x["p_traded"] if x["p_srmc"] > x["p_traded"] else x["p_srmc"]
-            return p_ref_bb
-
-        if check_for_front_end_input:
-            q = 'select * from m7.fe_price_input fe left join m7.asset_groups ag on fe.prod_gr_fe = ag.parent '
-            q = q + 'where fe."timestamp">=CURRENT_DATE and ag.parent IS NOT NULL '
-            q = q + 'order by fe.prod_gr_fe, ag.sp, fe.timestamp;'
-
-            df_fe = gcp.query_postgresql(q)
-            logging.info("select asset groups-sql")
-
-            if df_fe is not None:
-                df_fe.drop_duplicates(subset=["prod_gr_fe","sites"], keep="last", inplace=True)
-                dfr = pd.merge(dfr, df_fe.loc[:, ["sp", "is_selling", "sites", "p_trader"]],
-                               on=["sp", "is_selling", "sites"], how="left")
-                logging.info("merge asset groups with dfo-process")
-
-            else:
-                dfr["p_trader"] = np.nan
 
         if return_just_margin==False:
 
-            dfr[cl_p_asset_limit["b"]] = dfr.apply(get_p_ref_bb, axis=1) - p_increment
+            dfr[cl_p_asset_limit["b"]] = dfr["p_srmc"] - p_b_margin_min
             dfr[cl_p_asset_limit["o"]] = dfr["p_srmc"] + p_o_margin_min
         else:
-            dfr[cl_p_asset_limit["b"]] = - p_increment
+            dfr[cl_p_asset_limit["b"]] = - p_b_margin_min
             dfr[cl_p_asset_limit["o"]] = p_o_margin_min
+
+    elif asset_strategy == "churner":
+
+        if return_just_margin == False:
+            dfr[cl_p_asset_limit["b"]] = dfr["p_traded"]-p_b_margin_min
+            dfr[cl_p_asset_limit["o"]] = dfr["p_srmc"] + p_o_margin_min
+
+        else:
+            dfr[cl_p_asset_limit["b"]] = dfr["p_traded"]-p_b_margin_min-dfr["p_srmc"]
+            dfr[cl_p_asset_limit["o"]] = p_o_margin_min
+
     else:
         print("Asset strategy governs the profitability that we're happy to sell at. At the time being, we're "
               "just using a simple minimum margin on top of p_srmc + 0.01 for selling & p_srmc - 0.01 for"
@@ -700,9 +676,11 @@ def submit_a_post_order(x):
     if x["high_r_ot"]==False:
 
         if x["post_order_type"] == "new":
+
             j = post_new_order(token=x["token"], product=x["igloo_product"],
                                site=x["sites"], is_selling=x["is_selling"],
                                volume=x["mw_to_trade"], price=x["p_to_trade"])
+            update_local_copy(j,x)
 
         elif x["post_order_type"]  == "amended":
             j = amend_order(token=x["token"], order_id=x["id_ordered"],
@@ -1124,7 +1102,8 @@ def check_if_traded_after_check(token, x):
         (t.igloo_product == x[1]["igloo_product"]) &
         (t.trade_time>=x[1]["ts_trades_checked"])
     ]
-
+    # if x[1]["sites"]=="MELAM":
+    #     print()
     # # Sort so that the most recent traded volume sits at top of the dataframe.
     # j.sort_values(by="trade_time",ascending=False, inplace=True)
     if j.empty:
@@ -1263,7 +1242,8 @@ def mf_trade(dfo):
                 print("There is a more competitive order by another asset on the market.")
                 continue
 
-            # j = submit_a_post_order(x[1])
+            j = submit_a_post_order(x[1])
+
             insert_order_on_db(x[1], j)
 
         cancel_hanging_orders(token)

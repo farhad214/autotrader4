@@ -336,17 +336,19 @@ def mf_front_end():
 
             dfr = df.copy()
 
-            dfr2 = (dfr.loc[dfr.gr_type=="asset",["sp","is_selling","prod_gr","parent","p_traded","p_srmc"]]).copy()
+            df_assets = (dfr.loc[dfr.gr_type=="asset",["sp","is_selling","prod_gr","parent","p_traded","p_srmc"]]).copy()
 
-            dfr2.rename(columns={"prod_gr":"sites"},inplace=True)
-            dfr2["p_srmc"]= dfr2["p_srmc"].astype("float")
+            df_assets.rename(columns={"prod_gr":"sites"},inplace=True)
+            df_assets["p_srmc"]= df_assets["p_srmc"].astype("float")
 
-            # df1 = df_fe.loc[:,["prod_gr_fe","p_trader","p_model"]]
-            dfr2 = calc_p_asset(dfr2,asset_strategy, return_just_margin=True)
-            dfr2["p_model"] = np.where(dfr2["is_selling"], dfr2[cl_p_asset_limit["o"]], dfr2[cl_p_asset_limit["b"]]).round(2)
-            dfr2.rename(columns={"parent":"prod_gr"},inplace=True)
-            dfr2.drop_duplicates(subset=["prod_gr","p_trader","p_model"], inplace=True)
-            dfr=pd.merge(dfr, dfr2.loc[:,["prod_gr","p_model","p_trader"]], on="prod_gr", how="left")
+            df_assets = calc_p_asset(df_assets,asset_strategy, return_just_margin=True)
+            df_assets["p_model"] = np.where(df_assets["is_selling"], df_assets[cl_p_asset_limit["o"]], df_assets[cl_p_asset_limit["b"]])
+            df_assets["p_model"]=df_assets["p_model"].astype(float).round(2)
+
+            df_assets.rename(columns={"parent":"prod_gr"}, inplace=True)
+            # df_assets.drop_duplicates(subset=["prod_gr", "p_trader","p_model"], inplace=True)
+            df_assets.drop_duplicates(subset=["prod_gr", "p_trader"], inplace=True)
+            dfr=pd.merge(dfr, df_assets.loc[:,["prod_gr","p_model","p_trader"]], on="prod_gr", how="left")
 
             return dfr
 
@@ -376,6 +378,7 @@ def mf_front_end():
         for record in tv_asset_b.get_children():
             tv_asset_b.delete(record)
         df_tv_asset_b = df.loc[df["is_selling"]==False,["prod_gr","mw_to_trade","p_traded","p_srmc","lvl"]]
+
         for index, row in df_tv_asset_b.iterrows():
 
             if row["lvl"] == 0:

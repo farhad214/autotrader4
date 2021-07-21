@@ -16,7 +16,7 @@ blc = True
 #######################################################################################################################
 
 trade_selected_sites_only = True    # Trade only sites in tradable_sites list.
-tradable_sites = ["LANGE","SANFT","MELAM","PLYTH"]
+tradable_sites = ["LANGE","SANFT","MELAM","REDDA","REDDB","THEVE","AMPLL"]
 # tradable_sites = ["LANGE"]
 
 # tradable_sites = [
@@ -264,8 +264,10 @@ def flag_for_gc(dfi,now):
     """
     dfr = dfi.copy()
     if trade_hh_only:
+
         t_mkt_tot = t_gc_market + t_headroom
         t_bm_tot = t_gc_bm + t_headroom+t_headroom_bm
+
         # Calc final moment before market & BM gate closures.
         dfr["ts_gc_mkt"] = dfr["timestamp"] - timedelta(minutes=t_mkt_tot)
         dfr["ts_gc_bm"] = dfr["timestamp"] - timedelta(minutes=t_bm_tot)
@@ -273,16 +275,6 @@ def flag_for_gc(dfi,now):
         # Mandatory flagging: Calculate the first tradable SP.
         dfr["f_mkt_open"] = dfr["ts_gc_mkt"].apply(lambda x: True if x > now else False)
         dfr["f_bm_open"] = dfr["ts_gc_bm"].apply(lambda x: True if x > now else False)
-
-
-        # Calc final moment before market & BM gate closures.
-        dfr["ts_gc_mkt"] = dfr["timestamp"] - timedelta(minutes=15 + 3)
-        dfr["ts_gc_bm"] = dfr["timestamp"] - timedelta(minutes=60 + 3)
-
-        # Mandatory flagging: Calculate the first tradable SP.
-        dfr["f_mkt_open"] = dfr["ts_gc_mkt"].apply(lambda x: True if x > now else False)
-        dfr["f_bm_open"] = dfr["ts_gc_bm"].apply(lambda x: True if x > now else False)
-
 
         if assume_all_sites_nbm:
             # f_open tells us the definitive gate closure: if NBM site => market GC, else BM GC.
@@ -311,6 +303,7 @@ def calc_mw_to_trade(dfi):
         """
         if x["is_selling"] & x["f_can_trade"]:
             r = mw_to_trade_min if is_mw_to_trade_min else x["mw_to_sell"]
+
         elif ~x["is_selling"] & ~x["f_can_trade"]:
             r = mw_to_trade_min if is_mw_to_trade_min else x["mw_to_buy"]
         else:
